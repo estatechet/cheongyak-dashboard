@@ -31,6 +31,17 @@ interface ApiResponse {
 
 const MONO_SHADES = ['#1d1d1f', '#333333', '#555555', '#7a7a7a', '#999999', '#b0b0b0', '#c8c8c8', '#e0e0e0'];
 
+// "072.6854A" → "72.7A", "059.9500" → "60.0"
+function fmtHouseTy(ht: string): string {
+  if (!ht) return '-';
+  const m = ht.match(/^([\d.]+)([A-Za-z]*)$/);
+  if (!m) return ht;
+  const num = parseFloat(m[1]);
+  if (isNaN(num)) return ht;
+  const rounded = num % 1 < 0.05 && num % 1 > -0.05 ? `${Math.round(num)}` : num.toFixed(1);
+  return `${rounded}${m[2]}`;
+}
+
 async function fetchCompetition(region: string): Promise<ApiResponse> {
   const params = new URLSearchParams({ type: 'competition' });
   if (region !== '전국') params.set('region', region);
@@ -80,9 +91,7 @@ export default function CompetitionTab({ region }: { region: string }) {
     .sort((a, b) => parseFloat(b.CMPET_RATE) - parseFloat(a.CMPET_RATE))
     .slice(0, 12)
     .map((i) => ({
-      name: i.HOUSE_TY
-        ? `${i.HOUSE_MANAGE_NO?.slice(-4) ?? ''} ${i.HOUSE_TY}`
-        : (i.HOUSE_MANAGE_NO?.slice(-6) ?? '-'),
+      name: fmtHouseTy(i.HOUSE_TY),
       rate: parseFloat(i.CMPET_RATE),
     }));
 
@@ -99,7 +108,7 @@ export default function CompetitionTab({ region }: { region: string }) {
 
   const typeMap = new Map<string, { total: number; count: number }>();
   validItems.forEach((i) => {
-    const key = i.HOUSE_TY || '기타';
+    const key = fmtHouseTy(i.HOUSE_TY) || '기타';
     const existing = typeMap.get(key) ?? { total: 0, count: 0 };
     typeMap.set(key, { total: existing.total + parseFloat(i.CMPET_RATE), count: existing.count + 1 });
   });
@@ -113,7 +122,7 @@ export default function CompetitionTab({ region }: { region: string }) {
     .slice(0, 10)
     .map((i, idx) => ({
       rank: idx + 1,
-      type: i.HOUSE_TY || '-',
+      type: fmtHouseTy(i.HOUSE_TY),
       region: i.RESIDE_SENM || '-',
       reqCnt: Number(i.REQ_CNT || 0),
       rate: parseFloat(i.CMPET_RATE).toFixed(1),
@@ -303,13 +312,16 @@ export default function CompetitionTab({ region }: { region: string }) {
                     onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.backgroundColor = '#fafafc'; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.backgroundColor = 'transparent'; }}
                   >
-                    <td style={{ padding: '9px 12px', color: '#1d1d1f', fontSize: '12px' }}>{item.HOUSE_TY || '-'}</td>
+                    <td style={{ padding: '9px 12px', color: '#1d1d1f', fontSize: '12px' }}>{fmtHouseTy(item.HOUSE_TY)}</td>
                     <td style={{ padding: '9px 12px', color: '#7a7a7a', fontSize: '11px' }}>{item.RESIDE_SENM || '-'}</td>
                     <td style={{ padding: '9px 12px', color: '#7a7a7a', fontSize: '12px' }}>{Number(item.REQ_CNT || 0).toLocaleString()}</td>
                     <td style={{ padding: '9px 12px', fontSize: '12px' }}>
-                      <span style={{ fontWeight: parseFloat(item.CMPET_RATE) > 10 ? 700 : 400, color: '#1d1d1f' }}>
-                        {parseFloat(item.CMPET_RATE).toFixed(1)}:1
-                      </span>
+                      {(() => {
+                        const r = parseFloat(item.CMPET_RATE);
+                        return isNaN(r)
+                          ? <span style={{ color: '#b0b0b0' }}>-</span>
+                          : <span style={{ fontWeight: r > 10 ? 700 : 400, color: '#1d1d1f' }}>{r.toFixed(1)}:1</span>;
+                      })()}
                     </td>
                   </tr>
                 ))}
