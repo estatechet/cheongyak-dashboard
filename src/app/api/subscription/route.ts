@@ -21,10 +21,15 @@ async function fetchOdcloud(url: string, page = 1, perPage = 10, cond?: Record<s
 
   const response = await fetch(`${url}?${params.toString()}`, {
     next: { revalidate: 3600 },
+    signal: AbortSignal.timeout(9000),
   });
 
-  if (!response.ok) throw new Error(`API 호출 실패: ${response.status}`);
+  if (!response.ok) throw new Error(`외부 API 오류: ${response.status}`);
   return response.json();
+}
+
+function settled<T>(result: PromiseSettledResult<T>, fallback: T): T {
+  return result.status === 'fulfilled' ? result.value : fallback;
 }
 
 export async function GET(request: NextRequest) {
@@ -48,12 +53,14 @@ export async function GET(request: NextRequest) {
     let data;
     switch (type) {
       case 'kpi': {
-        // Parallel fetch for KPI cards
-        const [saleData, compData, ageData] = await Promise.all([
+        const [saleRes, compRes, ageRes] = await Promise.allSettled([
           fetchOdcloud(SALE_URL, 1, 1, hasCond ? cond : undefined),
           fetchOdcloud(COMPETITION_URL, 1, 100),
           fetchOdcloud(WINNER_AGE_URL, 1, 5),
         ]);
+        const saleData = settled(saleRes, null);
+        const compData = settled(compRes, null);
+        const ageData = settled(ageRes, null);
 
         const compItems: Array<{ CMPET_RATE: string }> = compData?.data ?? [];
         const validRates = compItems
@@ -103,12 +110,16 @@ export async function GET(request: NextRequest) {
         break;
 
       case 'winner': {
-        const [ageData, areaData, cmpetAreaData] = await Promise.all([
+        const [ageRes, areaRes, cmpetRes] = await Promise.allSettled([
           fetchOdcloud(WINNER_AGE_URL, 1, 30),
           fetchOdcloud(WINNER_AREA_URL, 1, 50),
           fetchOdcloud(CMPETRT_AREA_URL, 1, 50),
         ]);
-        data = { ageData, areaData, cmpetAreaData };
+        data = {
+          ageData: settled(ageRes, null),
+          areaData: settled(areaRes, null),
+          cmpetAreaData: settled(cmpetRes, null),
+        };
         break;
       }
 
