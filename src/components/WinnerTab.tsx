@@ -38,10 +38,16 @@ interface CmpetAreaItem {
   PRZWNER_CNT?: string;
 }
 
+interface CompetitionItem {
+  RESIDE_SENM: string;
+  CMPET_RATE: string;
+}
+
 interface ApiResponse {
   ageData?: { totalCount?: number; data?: AgeStatItem[] };
   areaData?: { totalCount?: number; data?: AreaStatItem[] };
   cmpetAreaData?: { totalCount?: number; data?: CmpetAreaItem[] };
+  competitionData?: { totalCount?: number; data?: CompetitionItem[] };
   error?: string;
 }
 
@@ -85,6 +91,7 @@ export default function WinnerTab({ region }: { region: string }) {
   const ageItems = data?.ageData?.data ?? [];
   const areaItems = data?.areaData?.data ?? [];
   const cmpetItems = data?.cmpetAreaData?.data ?? [];
+  const competitionItems = data?.competitionData?.data ?? [];
 
   const latest = ageItems[ageItems.length - 1];
   const ageChartData = latest
@@ -115,15 +122,27 @@ export default function WinnerTab({ region }: { region: string }) {
   });
   const ageTotalChart = Object.entries(ageTotals).map(([name, value]) => ({ name, value }));
 
+  // Build region competition chart: prefer dedicated API, fall back to competition data
   const cmpetAreaMap = new Map<string, { total: number; count: number }>();
-  cmpetItems.forEach((i) => {
-    const key = i.AREA_NM || '기타';
-    const v = parseFloat(i.CMPET_RT || '0');
-    if (v > 0) {
-      const existing = cmpetAreaMap.get(key) ?? { total: 0, count: 0 };
-      cmpetAreaMap.set(key, { total: existing.total + v, count: existing.count + 1 });
-    }
-  });
+  if (cmpetItems.length > 0) {
+    cmpetItems.forEach((i) => {
+      const key = i.AREA_NM || '기타';
+      const v = parseFloat(i.CMPET_RT || '0');
+      if (v > 0) {
+        const ex = cmpetAreaMap.get(key) ?? { total: 0, count: 0 };
+        cmpetAreaMap.set(key, { total: ex.total + v, count: ex.count + 1 });
+      }
+    });
+  } else {
+    competitionItems.forEach((i) => {
+      const key = i.RESIDE_SENM || '기타';
+      const v = parseFloat(i.CMPET_RATE || '0');
+      if (v > 0) {
+        const ex = cmpetAreaMap.get(key) ?? { total: 0, count: 0 };
+        cmpetAreaMap.set(key, { total: ex.total + v, count: ex.count + 1 });
+      }
+    });
+  }
   const cmpetAreaChart = Array.from(cmpetAreaMap.entries())
     .map(([name, { total, count }]) => ({ name, rate: parseFloat((total / count).toFixed(1)) }))
     .sort((a, b) => b.rate - a.rate)
@@ -224,10 +243,10 @@ export default function WinnerTab({ region }: { region: string }) {
               <EmptyState />
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={ageTotalChart} margin={{ top: 4, right: 4, left: -12, bottom: 8 }}>
+                <BarChart data={ageTotalChart} margin={{ top: 4, right: 4, left: -4, bottom: 8 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#7a7a7a' }} />
-                  <YAxis tick={{ fontSize: 9, fill: '#7a7a7a' }} />
+                  <YAxis tick={{ fontSize: 9, fill: '#7a7a7a' }} tickFormatter={(v) => v >= 10000 ? `${Math.round(v / 10000)}만` : String(v)} />
                   <Tooltip
                     formatter={(v) => [Number(v).toLocaleString() + '명', '누계 당첨자']}
                     contentStyle={{ fontSize: '11px', border: '1px solid #e0e0e0', borderRadius: '8px' }}

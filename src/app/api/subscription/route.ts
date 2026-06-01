@@ -110,15 +110,17 @@ export async function GET(request: NextRequest) {
         break;
 
       case 'winner': {
-        const [ageRes, areaRes, cmpetRes] = await Promise.allSettled([
+        const [ageRes, areaRes, cmpetRes, compRes] = await Promise.allSettled([
           fetchOdcloud(WINNER_AGE_URL, 1, 30),
-          fetchOdcloud(WINNER_AREA_URL, 1, 50),
-          fetchOdcloud(CMPETRT_AREA_URL, 1, 50),
+          fetchOdcloud(WINNER_AREA_URL, 1, 100),
+          fetchOdcloud(CMPETRT_AREA_URL, 1, 100),
+          fetchOdcloud(COMPETITION_URL, 1, 100),
         ]);
         data = {
           ageData: settled(ageRes, null),
           areaData: settled(areaRes, null),
           cmpetAreaData: settled(cmpetRes, null),
+          competitionData: settled(compRes, null),
         };
         break;
       }

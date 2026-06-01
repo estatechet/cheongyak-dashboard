@@ -11,6 +11,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
+  AreaChart,
+  Area,
 } from 'recharts';
 
 interface SaleItem {
@@ -130,7 +132,7 @@ export default function SaleTab({ region }: { region: string }) {
   (chartData?.data ?? []).forEach((item) => {
     const d = item.RCRIT_PBLANC_DE;
     if (d && d.length >= 6) {
-      const m = `${d.slice(2, 4)}.${d.slice(4, 6)}`;
+      const m = `${d.slice(0, 4)}.${d.slice(4, 6)}`;
       monthMap.set(m, (monthMap.get(m) ?? 0) + 1);
     }
   });
@@ -230,16 +232,16 @@ export default function SaleTab({ region }: { region: string }) {
               <EmptyState />
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthChartData} margin={{ top: 4, right: 4, left: -22, bottom: 44 }}>
+                <AreaChart data={monthChartData} margin={{ top: 4, right: 8, left: -22, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#7a7a7a' }} angle={-40} textAnchor="end" interval={0} />
+                  <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#7a7a7a' }} interval={0} />
                   <YAxis tick={{ fontSize: 9, fill: '#7a7a7a' }} />
                   <Tooltip
                     formatter={(v) => [`${v}건`, '공고 수']}
                     contentStyle={{ fontSize: '11px', border: '1px solid #e0e0e0', borderRadius: '8px' }}
                   />
-                  <Bar dataKey="count" fill="#555555" radius={[3, 3, 0, 0]} />
-                </BarChart>
+                  <Area type="monotone" dataKey="count" stroke="#555555" strokeWidth={2} fill="#555555" fillOpacity={0.12} dot={{ r: 4, fill: '#555555', strokeWidth: 0 }} activeDot={{ r: 5 }} />
+                </AreaChart>
               </ResponsiveContainer>
             )}
           </div>
