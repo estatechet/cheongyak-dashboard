@@ -38,15 +38,17 @@ interface ApiResponse {
 
 const MONO_SHADES = ['#1d1d1f', '#333333', '#555555', '#7a7a7a', '#999999', '#b0b0b0', '#c8c8c8', '#e0e0e0'];
 
-async function fetchSale(region: string, page: number): Promise<ApiResponse> {
+async function fetchSale(region: string, houseSecd: string, page: number): Promise<ApiResponse> {
   const params = new URLSearchParams({ type: 'sale', page: String(page) });
   if (region !== '전국') params.set('region', region);
+  if (houseSecd) params.set('houseSecd', houseSecd);
   return fetch(`/api/subscription?${params}`).then((r) => r.json());
 }
 
-async function fetchSaleChart(region: string): Promise<ApiResponse> {
+async function fetchSaleChart(region: string, houseSecd: string): Promise<ApiResponse> {
   const params = new URLSearchParams({ type: 'sale-chart' });
   if (region !== '전국') params.set('region', region);
+  if (houseSecd) params.set('houseSecd', houseSecd);
   return fetch(`/api/subscription?${params}`).then((r) => r.json());
 }
 
@@ -78,27 +80,27 @@ const panelTitleStyle: React.CSSProperties = {
   margin: 0,
 };
 
-export default function SaleTab({ region }: { region: string }) {
+export default function SaleTab({ region, houseSecd }: { region: string; houseSecd: string }) {
   const [page, setPage] = useState(1);
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
 
   useEffect(() => {
     setPage(1);
     setExpandedIdx(null);
-  }, [region]);
+  }, [region, houseSecd]);
 
   const {
     data: listData,
     isLoading: listLoading,
     isError: listError,
   } = useQuery({
-    queryKey: ['sale', region, page],
-    queryFn: () => fetchSale(region, page),
+    queryKey: ['sale', region, houseSecd, page],
+    queryFn: () => fetchSale(region, houseSecd, page),
   });
 
   const { data: chartData, isLoading: chartLoading } = useQuery({
-    queryKey: ['sale-chart', region],
-    queryFn: () => fetchSaleChart(region),
+    queryKey: ['sale-chart', region, houseSecd],
+    queryFn: () => fetchSaleChart(region, houseSecd),
   });
 
   const items = listData?.data ?? [];

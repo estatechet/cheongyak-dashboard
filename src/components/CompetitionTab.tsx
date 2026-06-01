@@ -42,9 +42,10 @@ function fmtHouseTy(ht: string): string {
   return `${rounded}${m[2]}`;
 }
 
-async function fetchCompetition(region: string): Promise<ApiResponse> {
+async function fetchCompetition(region: string, houseSecd: string): Promise<ApiResponse> {
   const params = new URLSearchParams({ type: 'competition' });
   if (region !== '전국') params.set('region', region);
+  if (houseSecd) params.set('houseSecd', houseSecd);
   return fetch(`/api/subscription?${params}`).then((r) => r.json());
 }
 
@@ -71,10 +72,10 @@ const panelTitleStyle: React.CSSProperties = {
   margin: 0,
 };
 
-export default function CompetitionTab({ region }: { region: string }) {
+export default function CompetitionTab({ region, houseSecd }: { region: string; houseSecd: string }) {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['competition', region],
-    queryFn: () => fetchCompetition(region),
+    queryKey: ['competition', region, houseSecd],
+    queryFn: () => fetchCompetition(region, houseSecd),
   });
 
   const items = data?.data ?? [];

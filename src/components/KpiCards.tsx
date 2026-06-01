@@ -10,16 +10,17 @@ interface KpiData {
   error?: string;
 }
 
-function fetchKpi(region: string): Promise<KpiData> {
+function fetchKpi(region: string, houseSecd: string): Promise<KpiData> {
   const params = new URLSearchParams({ type: 'kpi' });
   if (region && region !== '전국') params.set('region', region);
+  if (houseSecd) params.set('houseSecd', houseSecd);
   return fetch(`/api/subscription?${params}`).then((r) => r.json());
 }
 
-export default function KpiSlimBar({ region }: { region: string }) {
+export default function KpiSlimBar({ region, houseSecd }: { region: string; houseSecd: string }) {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['kpi', region],
-    queryFn: () => fetchKpi(region),
+    queryKey: ['kpi', region, houseSecd],
+    queryFn: () => fetchKpi(region, houseSecd),
   });
 
   const dash = '—';

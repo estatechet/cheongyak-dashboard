@@ -19,11 +19,22 @@ const REGIONS = [
   '울산', '세종', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주',
 ];
 
+const HOUSE_SECDS = [
+  { code: '', label: '전체' },
+  { code: '01', label: '아파트' },
+  { code: '03', label: '오피스텔' },
+  { code: '04', label: '도시형생활주택' },
+  { code: '06', label: '민간임대' },
+];
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabId>('sale');
   const [region, setRegion] = useState('전국');
+  const [houseSecd, setHouseSecd] = useState('');
   const [regionOpen, setRegionOpen] = useState(false);
+  const [houseSecdOpen, setHouseSecdOpen] = useState(false);
   const regionRef = useRef<HTMLDivElement>(null);
+  const houseSecdRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!regionOpen) return;
@@ -35,6 +46,19 @@ export default function Home() {
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, [regionOpen]);
+
+  useEffect(() => {
+    if (!houseSecdOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (houseSecdRef.current && !houseSecdRef.current.contains(e.target as Node)) {
+        setHouseSecdOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [houseSecdOpen]);
+
+  const houseSecdLabel = HOUSE_SECDS.find((h) => h.code === houseSecd)?.label ?? '전체';
 
   return (
     <div
@@ -105,79 +129,143 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Right: region accordion button */}
-        <div ref={regionRef} style={{ position: 'relative' }}>
-          <button
-            onClick={() => setRegionOpen((v) => !v)}
-            style={{
-              backgroundColor: '#333333',
-              color: '#ffffff',
-              fontSize: '13px',
-              padding: '7px 16px',
-              borderRadius: '8px',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {region}
-            <span style={{ fontSize: '10px' }}>{regionOpen ? '▾' : '▸'}</span>
-          </button>
-
-          {/* Dropdown panel */}
-          {regionOpen && (
-            <div
+        {/* Right: filters */}
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {/* 주택구분 */}
+          <div ref={houseSecdRef} style={{ position: 'relative' }}>
+            <button
+              onClick={() => setHouseSecdOpen((v) => !v)}
               style={{
-                position: 'absolute',
-                top: '42px',
-                right: 0,
-                zIndex: 50,
-                backgroundColor: '#ffffff',
-                border: '1px solid #e0e0e0',
-                borderRadius: '11px',
-                padding: '12px',
-                width: '280px',
-                outline: '1px solid #e0e0e0',
+                backgroundColor: '#333333',
+                color: '#ffffff',
+                fontSize: '13px',
+                padding: '7px 16px',
+                borderRadius: '8px',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                whiteSpace: 'nowrap',
               }}
             >
+              {houseSecdLabel}
+              <span style={{ fontSize: '10px' }}>{houseSecdOpen ? '▾' : '▸'}</span>
+            </button>
+
+            {houseSecdOpen && (
               <div
                 style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '6px',
+                  position: 'absolute',
+                  top: '42px',
+                  right: 0,
+                  zIndex: 50,
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '11px',
+                  padding: '12px',
+                  width: '260px',
+                  outline: '1px solid #e0e0e0',
                 }}
               >
-                {REGIONS.map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => {
-                      setRegion(r);
-                      setRegionOpen(false);
-                    }}
-                    style={{
-                      padding: '5px 12px',
-                      fontSize: '12px',
-                      borderRadius: '9999px',
-                      border: region === r ? '1px solid #1d1d1f' : '1px solid #e0e0e0',
-                      backgroundColor: region === r ? '#1d1d1f' : '#ffffff',
-                      color: region === r ? '#ffffff' : '#333333',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {r}
-                  </button>
-                ))}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {HOUSE_SECDS.map((h) => (
+                    <button
+                      key={h.code}
+                      onClick={() => {
+                        setHouseSecd(h.code);
+                        setHouseSecdOpen(false);
+                      }}
+                      style={{
+                        padding: '5px 12px',
+                        fontSize: '12px',
+                        borderRadius: '9999px',
+                        border: houseSecd === h.code ? '1px solid #1d1d1f' : '1px solid #e0e0e0',
+                        backgroundColor: houseSecd === h.code ? '#1d1d1f' : '#ffffff',
+                        color: houseSecd === h.code ? '#ffffff' : '#333333',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {h.label}
+                    </button>
+                  ))}
+                </div>
+                {activeTab === 'winner' && houseSecd && (
+                  <div style={{ marginTop: '8px', fontSize: '10.5px', color: '#b0b0b0', lineHeight: 1.4 }}>
+                    당첨자 통계 API는 주택 유형 필터를 지원하지 않아 무시됩니다.
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            )}
+          </div>
+
+          {/* 지역 */}
+          <div ref={regionRef} style={{ position: 'relative' }}>
+            <button
+              onClick={() => setRegionOpen((v) => !v)}
+              style={{
+                backgroundColor: '#333333',
+                color: '#ffffff',
+                fontSize: '13px',
+                padding: '7px 16px',
+                borderRadius: '8px',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {region}
+              <span style={{ fontSize: '10px' }}>{regionOpen ? '▾' : '▸'}</span>
+            </button>
+
+            {regionOpen && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '42px',
+                  right: 0,
+                  zIndex: 50,
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '11px',
+                  padding: '12px',
+                  width: '280px',
+                  outline: '1px solid #e0e0e0',
+                }}
+              >
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {REGIONS.map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => {
+                        setRegion(r);
+                        setRegionOpen(false);
+                      }}
+                      style={{
+                        padding: '5px 12px',
+                        fontSize: '12px',
+                        borderRadius: '9999px',
+                        border: region === r ? '1px solid #1d1d1f' : '1px solid #e0e0e0',
+                        backgroundColor: region === r ? '#1d1d1f' : '#ffffff',
+                        color: region === r ? '#ffffff' : '#333333',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
       {/* KPI SLIM BAR */}
-      <KpiSlimBar region={region} />
+      <KpiSlimBar region={region} houseSecd={houseSecd} />
 
       {/* MAIN CONTENT */}
       <main
@@ -188,8 +276,8 @@ export default function Home() {
         }}
       >
         <div style={{ height: '100%', overflow: 'hidden' }}>
-          {activeTab === 'sale' && <SaleTab region={region} />}
-          {activeTab === 'competition' && <CompetitionTab region={region} />}
+          {activeTab === 'sale' && <SaleTab region={region} houseSecd={houseSecd} />}
+          {activeTab === 'competition' && <CompetitionTab region={region} houseSecd={houseSecd} />}
           {activeTab === 'winner' && <WinnerTab region={region} />}
         </div>
       </main>

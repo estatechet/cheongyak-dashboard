@@ -6,8 +6,6 @@ const SALE_URL = 'https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1/getAPTLtt
 const COMPETITION_URL = 'https://api.odcloud.kr/api/ApplyhomeInfoCmpetRtSvc/v1/getAPTLttotPblancCmpet';
 const WINNER_AGE_URL = 'https://api.odcloud.kr/api/ApplyhomeStatSvc/v1/getAPTPrzwnerAgeStat';
 const WINNER_AREA_URL = 'https://api.odcloud.kr/api/ApplyhomeStatSvc/v1/getAPTPrzwnerAreaStat';
-const REQST_AREA_URL = 'https://api.odcloud.kr/api/ApplyhomeStatSvc/v1/getAPTReqstAreaStat';
-const CMPETRT_AREA_URL = 'https://api.odcloud.kr/api/ApplyhomeStatSvc/v1/getAPTCmpetrtAreaStat';
 
 async function fetchOdcloud(url: string, page = 1, perPage = 10, cond?: Record<string, string>) {
   const params = new URLSearchParams({
@@ -36,6 +34,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const type = searchParams.get('type') || 'sale';
   const region = searchParams.get('region') || '';
+  const houseSecd = searchParams.get('houseSecd') || '';
   const page = parseInt(searchParams.get('page') || '1', 10);
 
   if (!API_KEY) {
@@ -46,23 +45,43 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const cond: Record<string, string> = {};
-    if (region && region !== '전국') cond['SUBSCRPT_AREA_CODE_NM'] = region;
-    const hasCond = Object.keys(cond).length > 0;
+    // SALE_URL · KPI cond (HOUSE_SECD 지원)
+    const saleCond: Record<string, string> = {};
+    if (region && region !== '전국') saleCond['SUBSCRPT_AREA_CODE_NM'] = region;
+    if (houseSecd) saleCond['HOUSE_SECD'] = houseSecd;
+    const hasSaleCond = Object.keys(saleCond).length > 0;
+
+    // COMPETITION_URL cond (HOUSE_SECD 미지원 → region만)
+    const compCond: Record<string, string> = {};
+    if (region && region !== '전국') compCond['SUBSCRPT_AREA_CODE_NM'] = region;
+    const hasCompCond = Object.keys(compCond).length > 0;
+
+    // 경쟁률 데이터에 houseSecd 필터를 적용해야 하면, 분양공고 API로 매칭 HOUSE_MANAGE_NO를
+    // 미리 받아 둠. 외부 API는 perPage 100 한도이므로 정확하지 않을 수 있다.
+    async function matchingHouseNos(): Promise<Set<string> | null> {
+      if (!houseSecd) return null;
+      const saleRaw = await fetchOdcloud(SALE_URL, 1, 100, saleCond);
+      const items: Array<{ HOUSE_MANAGE_NO?: string }> = saleRaw?.data ?? [];
+      return new Set(items.map((i) => i.HOUSE_MANAGE_NO ?? '').filter(Boolean));
+    }
 
     let data;
     switch (type) {
       case 'kpi': {
         const [saleRes, compRes, ageRes] = await Promise.allSettled([
-          fetchOdcloud(SALE_URL, 1, 1, hasCond ? cond : undefined),
-          fetchOdcloud(COMPETITION_URL, 1, 100, hasCond ? cond : undefined),
+          fetchOdcloud(SALE_URL, 1, 1, hasSaleCond ? saleCond : undefined),
+          fetchOdcloud(COMPETITION_URL, 1, 100, hasCompCond ? compCond : undefined),
           fetchOdcloud(WINNER_AGE_URL, 1, 5),
         ]);
         const saleData = settled(saleRes, null);
         const compData = settled(compRes, null);
         const ageData = settled(ageRes, null);
 
-        const compItems: Array<{ CMPET_RATE: string }> = compData?.data ?? [];
+        let compItems: Array<{ CMPET_RATE: string; HOUSE_MANAGE_NO?: string }> = compData?.data ?? [];
+        if (houseSecd) {
+          const matchSet = await matchingHouseNos();
+          if (matchSet) compItems = compItems.filter((i) => i.HOUSE_MANAGE_NO && matchSet.has(i.HOUSE_MANAGE_NO));
+        }
         const validRates = compItems
           .map((i) => parseFloat(i.CMPET_RATE))
           .filter((r) => r > 0);
@@ -98,29 +117,38 @@ export async function GET(request: NextRequest) {
       }
 
       case 'sale':
-        data = await fetchOdcloud(SALE_URL, page, 20, hasCond ? cond : undefined);
+        data = await fetchOdcloud(SALE_URL, page, 20, hasSaleCond ? saleCond : undefined);
         break;
 
       case 'sale-chart':
-        data = await fetchOdcloud(SALE_URL, 1, 100, hasCond ? cond : undefined);
+        data = await fetchOdcloud(SALE_URL, 1, 100, hasSaleCond ? saleCond : undefined);
         break;
 
-      case 'competition':
-        data = await fetchOdcloud(COMPETITION_URL, page, 50, hasCond ? cond : undefined);
+      case 'competition': {
+        const raw = await fetchOdcloud(COMPETITION_URL, 1, 100, hasCompCond ? compCond : undefined);
+        const items: Array<Record<string, string>> = raw?.data ?? [];
+        const matchSet = await matchingHouseNos();
+        const filtered = matchSet
+          ? items.filter((i) => i.HOUSE_MANAGE_NO && matchSet.has(i.HOUSE_MANAGE_NO))
+          : items;
+        // 클라이언트 페이지네이션 (perPage 50)
+        const perPage = 50;
+        const start = (page - 1) * perPage;
+        data = {
+          totalCount: filtered.length,
+          data: filtered.slice(start, start + perPage),
+        };
         break;
+      }
 
       case 'winner': {
-        const [ageRes, areaRes, cmpetRes, compRes] = await Promise.allSettled([
+        const [ageRes, areaRes] = await Promise.allSettled([
           fetchOdcloud(WINNER_AGE_URL, 1, 30),
           fetchOdcloud(WINNER_AREA_URL, 1, 100),
-          fetchOdcloud(CMPETRT_AREA_URL, 1, 100),
-          fetchOdcloud(COMPETITION_URL, 1, 100, hasCond ? cond : undefined),
         ]);
         data = {
           ageData: settled(ageRes, null),
           areaData: settled(areaRes, null),
-          cmpetAreaData: settled(cmpetRes, null),
-          competitionData: settled(compRes, null),
         };
         break;
       }
