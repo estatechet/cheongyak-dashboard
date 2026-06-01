@@ -230,6 +230,14 @@ export default function SaleTab({ region }: { region: string }) {
               <Spinner />
             ) : monthChartData.length === 0 ? (
               <EmptyState />
+            ) : monthChartData.length === 1 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '6px' }}>
+                <span style={{ fontSize: '11px', color: '#b0b0b0' }}>{monthChartData[0].name}</span>
+                <span style={{ fontSize: '44px', fontWeight: 700, color: '#1d1d1f', letterSpacing: '-2px', lineHeight: 1 }}>
+                  {monthChartData[0].count}
+                </span>
+                <span style={{ fontSize: '13px', color: '#7a7a7a' }}>건 공고</span>
+              </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={monthChartData} margin={{ top: 4, right: 8, left: -22, bottom: 20 }}>
