@@ -325,7 +325,7 @@ export default function CompetitionTab({ region }: { region: string }) {
 function Spinner() {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-      <span style={{ fontSize: '11px', color: '#b0b0b0' }}>로딩 중...</span>
+      <div className="spinner" />
     </div>
   );
 }

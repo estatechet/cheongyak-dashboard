@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
       case 'kpi': {
         const [saleRes, compRes, ageRes] = await Promise.allSettled([
           fetchOdcloud(SALE_URL, 1, 1, hasCond ? cond : undefined),
-          fetchOdcloud(COMPETITION_URL, 1, 100),
+          fetchOdcloud(COMPETITION_URL, 1, 100, hasCond ? cond : undefined),
           fetchOdcloud(WINNER_AGE_URL, 1, 5),
         ]);
         const saleData = settled(saleRes, null);
@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
           fetchOdcloud(WINNER_AGE_URL, 1, 30),
           fetchOdcloud(WINNER_AREA_URL, 1, 100),
           fetchOdcloud(CMPETRT_AREA_URL, 1, 100),
-          fetchOdcloud(COMPETITION_URL, 1, 100),
+          fetchOdcloud(COMPETITION_URL, 1, 100, hasCond ? cond : undefined),
         ]);
         data = {
           ageData: settled(ageRes, null),

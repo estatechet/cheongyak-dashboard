@@ -53,8 +53,10 @@ interface ApiResponse {
 
 const PIE_COLORS = ['#1d1d1f', '#7a7a7a', '#b0b0b0', '#e0e0e0'];
 
-async function fetchWinner(): Promise<ApiResponse> {
-  return fetch('/api/subscription?type=winner').then((r) => r.json());
+async function fetchWinner(region: string): Promise<ApiResponse> {
+  const params = new URLSearchParams({ type: 'winner' });
+  if (region !== '전국') params.set('region', region);
+  return fetch(`/api/subscription?${params}`).then((r) => r.json());
 }
 
 const panelStyle: React.CSSProperties = {
@@ -81,11 +83,9 @@ const panelTitleStyle: React.CSSProperties = {
 };
 
 export default function WinnerTab({ region }: { region: string }) {
-  void region;
-
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['winner'],
-    queryFn: fetchWinner,
+    queryKey: ['winner', region],
+    queryFn: () => fetchWinner(region),
   });
 
   const ageItems = data?.ageData?.data ?? [];
@@ -213,7 +213,7 @@ export default function WinnerTab({ region }: { region: string }) {
             {isLoading ? (
               <Spinner />
             ) : areaChart.length === 0 ? (
-              <EmptyState />
+              <ApiUnsupportedState message="당첨자 지역별 통계 API가 현재 데이터를 제공하지 않습니다." />
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={areaChart} layout="vertical" margin={{ top: 4, right: 12, left: 20, bottom: 4 }}>
@@ -363,7 +363,7 @@ export default function WinnerTab({ region }: { region: string }) {
 function Spinner() {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-      <span style={{ fontSize: '11px', color: '#b0b0b0' }}>로딩 중...</span>
+      <div className="spinner" />
     </div>
   );
 }
@@ -372,6 +372,15 @@ function EmptyState() {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
       <span style={{ fontSize: '11px', color: '#b0b0b0' }}>데이터가 없습니다.</span>
+    </div>
+  );
+}
+
+function ApiUnsupportedState({ message }: { message: string }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '6px', padding: '12px' }}>
+      <span style={{ fontSize: '18px', color: '#c8c8c8' }}>—</span>
+      <span style={{ fontSize: '11px', color: '#b0b0b0', textAlign: 'center', lineHeight: '1.5' }}>{message}</span>
     </div>
   );
 }

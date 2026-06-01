@@ -382,7 +382,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 function Spinner() {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-      <span style={{ fontSize: '11px', color: '#b0b0b0' }}>로딩 중...</span>
+      <div className="spinner" />
     </div>
   );
 }
