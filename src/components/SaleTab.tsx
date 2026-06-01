@@ -128,6 +128,29 @@ export default function SaleTab({ region }: { region: string }) {
   });
   const supplyChartData = Object.entries(supplyBuckets).map(([name, count]) => ({ name, count }));
 
+  const monthMap = new Map<string, number>();
+  (chartData?.data ?? []).forEach((item) => {
+    const d = item.RCRIT_PBLANC_DE;
+    if (d && d.length >= 6) {
+      const m = `${d.slice(0, 4)}.${d.slice(4, 6)}`;
+      monthMap.set(m, (monthMap.get(m) ?? 0) + 1);
+    }
+  });
+  const monthChartData = Array.from(monthMap.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const builderMap = new Map<string, number>();
+  (chartData?.data ?? []).forEach((item) => {
+    const raw = item.CNSTRCT_ENTRPS_NM ?? '';
+    const b = raw.split(/[,/]/)[0].trim() || '기타';
+    builderMap.set(b, (builderMap.get(b) ?? 0) + 1);
+  });
+  const builderList = Array.from(builderMap.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([name, count], i) => ({ rank: i + 1, name, count }));
+
   return (
     <div
       style={{
@@ -148,7 +171,7 @@ export default function SaleTab({ region }: { region: string }) {
           ) : regionChartData.length === 0 ? (
             <EmptyState />
           ) : (
-            <ResponsiveContainer width="100%" height={180}>
+            <ResponsiveContainer width="100%" height={240}>
               <BarChart data={regionChartData} margin={{ top: 4, right: 8, left: -16, bottom: 48 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#7a7a7a' }} angle={-35} textAnchor="end" interval={0} />
@@ -177,7 +200,7 @@ export default function SaleTab({ region }: { region: string }) {
           {chartLoading ? (
             <LoadingState />
           ) : (
-            <ResponsiveContainer width="100%" height={180}>
+            <ResponsiveContainer width="100%" height={240}>
               <BarChart data={supplyChartData} margin={{ top: 4, right: 8, left: -16, bottom: 16 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#7a7a7a' }} />
@@ -193,8 +216,8 @@ export default function SaleTab({ region }: { region: string }) {
         </div>
       </div>
 
-      {/* Panel 3: List */}
-      <div style={panelStyle}>
+      {/* Panel 3: List (spans 2 rows) */}
+      <div style={{ ...panelStyle, gridRow: 'span 2', alignSelf: 'stretch' }}>
         <div style={{ ...panelHeaderStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <h3 style={panelTitleStyle}>공고 목록</h3>
           <span style={{ fontSize: '11px', color: '#7a7a7a' }}>총 {total.toLocaleString()}건</span>
@@ -246,7 +269,6 @@ export default function SaleTab({ region }: { region: string }) {
                 </div>
               ))}
 
-              {/* Pagination */}
               {totalPages > 1 && (
                 <div
                   style={{
@@ -293,6 +315,65 @@ export default function SaleTab({ region }: { region: string }) {
                 </div>
               )}
             </>
+          )}
+        </div>
+      </div>
+
+      {/* Panel 4: Monthly trend */}
+      <div style={panelStyle}>
+        <div style={panelHeaderStyle}>
+          <h3 style={panelTitleStyle}>월별 공고 추이</h3>
+        </div>
+        <div style={{ flex: 1, padding: '16px', minHeight: 0 }}>
+          {chartLoading ? (
+            <LoadingState />
+          ) : monthChartData.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={monthChartData} margin={{ top: 4, right: 8, left: -16, bottom: 36 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#7a7a7a' }} angle={-35} textAnchor="end" interval={0} />
+                <YAxis tick={{ fontSize: 10, fill: '#7a7a7a' }} />
+                <Tooltip
+                  formatter={(v) => [`${v}건`, '공고 수']}
+                  contentStyle={{ fontSize: '11px', border: '1px solid #e0e0e0', borderRadius: '8px' }}
+                />
+                <Bar dataKey="count" fill="#555555" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </div>
+
+      {/* Panel 5: Builder ranking */}
+      <div style={panelStyle}>
+        <div style={panelHeaderStyle}>
+          <h3 style={panelTitleStyle}>시공사 공급 현황</h3>
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+          {chartLoading ? (
+            <LoadingState />
+          ) : builderList.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <tbody>
+                {builderList.map((item) => (
+                  <tr key={item.rank} style={{ borderTop: '1px solid #f0f0f0' }}>
+                    <td style={{ padding: '9px 12px', width: '28px', color: '#b0b0b0', fontSize: '11px', fontWeight: 600 }}>
+                      {item.rank}
+                    </td>
+                    <td style={{ padding: '9px 12px', fontSize: '12px', color: '#1d1d1f' }}>
+                      {item.name}
+                    </td>
+                    <td style={{ padding: '9px 12px', fontSize: '12px', color: '#7a7a7a', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      {item.count}건
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
       </div>

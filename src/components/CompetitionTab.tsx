@@ -97,6 +97,28 @@ export default function CompetitionTab({ region }: { region: string }) {
     .sort((a, b) => b.rate - a.rate)
     .slice(0, 12);
 
+  const typeMap = new Map<string, { total: number; count: number }>();
+  validItems.forEach((i) => {
+    const key = i.HOUSE_TY || '기타';
+    const existing = typeMap.get(key) ?? { total: 0, count: 0 };
+    typeMap.set(key, { total: existing.total + parseFloat(i.CMPET_RATE), count: existing.count + 1 });
+  });
+  const typeChart = Array.from(typeMap.entries())
+    .map(([name, { total, count }]) => ({ name, rate: parseFloat((total / count).toFixed(1)) }))
+    .sort((a, b) => b.rate - a.rate)
+    .slice(0, 10);
+
+  const topReqItems = [...validItems]
+    .sort((a, b) => Number(b.REQ_CNT) - Number(a.REQ_CNT))
+    .slice(0, 10)
+    .map((i, idx) => ({
+      rank: idx + 1,
+      type: i.HOUSE_TY || '-',
+      region: i.RESIDE_SENM || '-',
+      reqCnt: Number(i.REQ_CNT || 0),
+      rate: parseFloat(i.CMPET_RATE).toFixed(1),
+    }));
+
   return (
     <div
       style={{
@@ -132,7 +154,7 @@ export default function CompetitionTab({ region }: { region: string }) {
           ) : top15.length === 0 ? (
             <EmptyState />
           ) : (
-            <ResponsiveContainer width="100%" height={180}>
+            <ResponsiveContainer width="100%" height={240}>
               <BarChart data={top15} margin={{ top: 4, right: 8, left: -16, bottom: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="name" tick={{ fontSize: 8, fill: '#7a7a7a' }} angle={-35} textAnchor="end" interval={0} />
@@ -163,7 +185,7 @@ export default function CompetitionTab({ region }: { region: string }) {
           ) : regionChart.length === 0 ? (
             <EmptyState />
           ) : (
-            <ResponsiveContainer width="100%" height={180}>
+            <ResponsiveContainer width="100%" height={240}>
               <BarChart
                 data={regionChart}
                 layout="vertical"
@@ -183,8 +205,8 @@ export default function CompetitionTab({ region }: { region: string }) {
         </div>
       </div>
 
-      {/* Panel 3: Full table */}
-      <div style={panelStyle}>
+      {/* Panel 3: Full table (spans 2 rows) */}
+      <div style={{ ...panelStyle, gridRow: 'span 2', alignSelf: 'stretch' }}>
         <div style={panelHeaderStyle}>
           <h3 style={panelTitleStyle}>전체 경쟁률 현황</h3>
         </div>
@@ -246,6 +268,91 @@ export default function CompetitionTab({ region }: { region: string }) {
                       >
                         {parseFloat(item.CMPET_RATE).toFixed(1)}:1
                       </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+
+      {/* Panel 4: By house type */}
+      <div style={panelStyle}>
+        <div style={panelHeaderStyle}>
+          <h3 style={panelTitleStyle}>주택형별 평균 경쟁률</h3>
+        </div>
+        <div style={{ flex: 1, padding: '16px', minHeight: 0 }}>
+          {isLoading ? (
+            <LoadingState />
+          ) : typeChart.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={typeChart} margin={{ top: 4, right: 8, left: -16, bottom: 48 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#7a7a7a' }} angle={-35} textAnchor="end" interval={0} />
+                <YAxis tick={{ fontSize: 10, fill: '#7a7a7a' }} />
+                <Tooltip
+                  formatter={(v) => [`${v}:1`, '평균 경쟁률']}
+                  contentStyle={{ fontSize: '11px', border: '1px solid #e0e0e0', borderRadius: '8px' }}
+                />
+                <Bar dataKey="rate" fill="#555555" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </div>
+
+      {/* Panel 5: Top by request count */}
+      <div style={panelStyle}>
+        <div style={panelHeaderStyle}>
+          <h3 style={panelTitleStyle}>신청건수 상위</h3>
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+          {isLoading ? (
+            <LoadingState />
+          ) : topReqItems.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead style={{ backgroundColor: '#f5f5f7', position: 'sticky', top: 0 }}>
+                <tr>
+                  {['#', '주택형', '지역', '신청', '경쟁률'].map((h) => (
+                    <th
+                      key={h}
+                      style={{
+                        padding: '8px 10px',
+                        textAlign: 'left',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: '#7a7a7a',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {topReqItems.map((item) => (
+                  <tr
+                    key={item.rank}
+                    style={{ borderTop: '1px solid #f0f0f0' }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLTableRowElement).style.backgroundColor = '#fafafc';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLTableRowElement).style.backgroundColor = 'transparent';
+                    }}
+                  >
+                    <td style={{ padding: '8px 10px', color: '#b0b0b0', fontSize: '11px', fontWeight: 600 }}>{item.rank}</td>
+                    <td style={{ padding: '8px 10px', fontSize: '12px', color: '#1d1d1f' }}>{item.type}</td>
+                    <td style={{ padding: '8px 10px', fontSize: '11px', color: '#7a7a7a' }}>{item.region}</td>
+                    <td style={{ padding: '8px 10px', fontSize: '12px', color: '#7a7a7a' }}>{item.reqCnt.toLocaleString()}</td>
+                    <td style={{ padding: '8px 10px', fontSize: '12px', color: '#1d1d1f', fontWeight: parseFloat(item.rate) > 10 ? 700 : 400 }}>
+                      {item.rate}:1
                     </td>
                   </tr>
                 ))}

@@ -84,6 +84,7 @@ export default function WinnerTab({ region }: { region: string }) {
 
   const ageItems = data?.ageData?.data ?? [];
   const areaItems = data?.areaData?.data ?? [];
+  const cmpetItems = data?.cmpetAreaData?.data ?? [];
 
   const latest = ageItems[ageItems.length - 1];
   const ageChartData = latest
@@ -104,6 +105,29 @@ export default function WinnerTab({ region }: { region: string }) {
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value)
     .slice(0, 12);
+
+  const ageTotals = { '30대': 0, '40대': 0, '50대': 0, '60대+': 0 };
+  ageItems.forEach((item) => {
+    ageTotals['30대'] += Number(item.AGE_30 || 0);
+    ageTotals['40대'] += Number(item.AGE_40 || 0);
+    ageTotals['50대'] += Number(item.AGE_50 || 0);
+    ageTotals['60대+'] += Number(item.AGE_60 || 0);
+  });
+  const ageTotalChart = Object.entries(ageTotals).map(([name, value]) => ({ name, value }));
+
+  const cmpetAreaMap = new Map<string, { total: number; count: number }>();
+  cmpetItems.forEach((i) => {
+    const key = i.AREA_NM || '기타';
+    const v = parseFloat(i.CMPET_RT || '0');
+    if (v > 0) {
+      const existing = cmpetAreaMap.get(key) ?? { total: 0, count: 0 };
+      cmpetAreaMap.set(key, { total: existing.total + v, count: existing.count + 1 });
+    }
+  });
+  const cmpetAreaChart = Array.from(cmpetAreaMap.entries())
+    .map(([name, { total, count }]) => ({ name, rate: parseFloat((total / count).toFixed(1)) }))
+    .sort((a, b) => b.rate - a.rate)
+    .slice(0, 10);
 
   return (
     <div
@@ -132,7 +156,7 @@ export default function WinnerTab({ region }: { region: string }) {
           ) : ageChartData.length === 0 ? (
             <EmptyState />
           ) : (
-            <ResponsiveContainer width="100%" height={180}>
+            <ResponsiveContainer width="100%" height={240}>
               <PieChart>
                 <Pie
                   data={ageChartData}
@@ -170,7 +194,7 @@ export default function WinnerTab({ region }: { region: string }) {
           ) : areaChart.length === 0 ? (
             <EmptyState />
           ) : (
-            <ResponsiveContainer width="100%" height={180}>
+            <ResponsiveContainer width="100%" height={240}>
               <BarChart
                 data={areaChart}
                 layout="vertical"
@@ -190,8 +214,8 @@ export default function WinnerTab({ region }: { region: string }) {
         </div>
       </div>
 
-      {/* Panel 3: Combined age + area table */}
-      <div style={panelStyle}>
+      {/* Panel 3: Combined age + area table (spans 2 rows) */}
+      <div style={{ ...panelStyle, gridRow: 'span 2', alignSelf: 'stretch' }}>
         <div style={panelHeaderStyle}>
           <h3 style={panelTitleStyle}>연령별 + 지역별 통계</h3>
         </div>
@@ -202,7 +226,6 @@ export default function WinnerTab({ region }: { region: string }) {
             <ErrorState message={data?.error ?? '오류'} />
           ) : (
             <>
-              {/* Age table */}
               {ageItems.length > 0 && (
                 <>
                   <div
@@ -260,7 +283,6 @@ export default function WinnerTab({ region }: { region: string }) {
                 </>
               )}
 
-              {/* Area table */}
               {areaItems.length > 0 && (
                 <>
                   <div
@@ -319,6 +341,64 @@ export default function WinnerTab({ region }: { region: string }) {
                 </>
               )}
             </>
+          )}
+        </div>
+      </div>
+
+      {/* Panel 4: Aggregated winner count by age */}
+      <div style={panelStyle}>
+        <div style={panelHeaderStyle}>
+          <h3 style={panelTitleStyle}>연령대별 누계 당첨자</h3>
+        </div>
+        <div style={{ flex: 1, padding: '16px', minHeight: 0 }}>
+          {isLoading ? (
+            <LoadingState />
+          ) : ageTotalChart.every((d) => d.value === 0) ? (
+            <EmptyState />
+          ) : (
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={ageTotalChart} margin={{ top: 4, right: 8, left: -8, bottom: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#7a7a7a' }} />
+                <YAxis tick={{ fontSize: 10, fill: '#7a7a7a' }} />
+                <Tooltip
+                  formatter={(v) => [Number(v).toLocaleString() + '명', '누계 당첨자']}
+                  contentStyle={{ fontSize: '11px', border: '1px solid #e0e0e0', borderRadius: '8px' }}
+                />
+                <Bar dataKey="value" fill="#555555" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </div>
+
+      {/* Panel 5: Regional competition rate from cmpetAreaData */}
+      <div style={panelStyle}>
+        <div style={panelHeaderStyle}>
+          <h3 style={panelTitleStyle}>지역별 평균 경쟁률</h3>
+        </div>
+        <div style={{ flex: 1, padding: '16px', minHeight: 0 }}>
+          {isLoading ? (
+            <LoadingState />
+          ) : cmpetAreaChart.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart
+                data={cmpetAreaChart}
+                layout="vertical"
+                margin={{ top: 4, right: 24, left: 24, bottom: 4 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
+                <XAxis type="number" tick={{ fontSize: 10, fill: '#7a7a7a' }} />
+                <YAxis dataKey="name" type="category" tick={{ fontSize: 9, fill: '#7a7a7a' }} width={52} />
+                <Tooltip
+                  formatter={(v) => [`${v}:1`, '평균 경쟁률']}
+                  contentStyle={{ fontSize: '11px', border: '1px solid #e0e0e0', borderRadius: '8px' }}
+                />
+                <Bar dataKey="rate" fill="#1d1d1f" radius={[0, 3, 3, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           )}
         </div>
       </div>
