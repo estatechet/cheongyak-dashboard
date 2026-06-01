@@ -111,7 +111,7 @@ export default function WinnerTab({ region }: { region: string }) {
         display: 'grid',
         gridTemplateColumns: '1fr 1fr 1.5fr',
         gap: '12px',
-        height: '100%',
+        alignItems: 'start',
       }}
     >
       {/* Panel 1: Age pie chart */}
@@ -132,7 +132,7 @@ export default function WinnerTab({ region }: { region: string }) {
           ) : ageChartData.length === 0 ? (
             <EmptyState />
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={180}>
               <PieChart>
                 <Pie
                   data={ageChartData}
@@ -170,7 +170,7 @@ export default function WinnerTab({ region }: { region: string }) {
           ) : areaChart.length === 0 ? (
             <EmptyState />
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={180}>
               <BarChart
                 data={areaChart}
                 layout="vertical"

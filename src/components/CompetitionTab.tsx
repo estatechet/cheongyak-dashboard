@@ -103,7 +103,7 @@ export default function CompetitionTab({ region }: { region: string }) {
         display: 'grid',
         gridTemplateColumns: '1fr 1fr 1.5fr',
         gap: '12px',
-        height: '100%',
+        alignItems: 'start',
       }}
     >
       {/* Panel 1: Top 15 bar chart */}
@@ -132,7 +132,7 @@ export default function CompetitionTab({ region }: { region: string }) {
           ) : top15.length === 0 ? (
             <EmptyState />
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={180}>
               <BarChart data={top15} margin={{ top: 4, right: 8, left: -16, bottom: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="name" tick={{ fontSize: 8, fill: '#7a7a7a' }} angle={-35} textAnchor="end" interval={0} />
@@ -163,7 +163,7 @@ export default function CompetitionTab({ region }: { region: string }) {
           ) : regionChart.length === 0 ? (
             <EmptyState />
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={180}>
               <BarChart
                 data={regionChart}
                 layout="vertical"
