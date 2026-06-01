@@ -187,7 +187,7 @@ export default function Home() {
           padding: '12px',
         }}
       >
-        <div style={{ height: '100%', overflowY: 'auto' }}>
+        <div style={{ height: '100%', overflow: 'hidden' }}>
           {activeTab === 'sale' && <SaleTab region={region} />}
           {activeTab === 'competition' && <CompetitionTab region={region} />}
           {activeTab === 'winner' && <WinnerTab region={region} />}

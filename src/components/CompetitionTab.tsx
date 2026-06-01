@@ -42,11 +42,14 @@ const panelStyle: React.CSSProperties = {
   border: '1px solid #e0e0e0',
   borderRadius: '18px',
   overflow: 'hidden',
+  display: 'flex',
+  flexDirection: 'column',
 };
 
 const panelHeaderStyle: React.CSSProperties = {
-  padding: '14px 20px 12px 20px',
+  padding: '12px 20px 10px 20px',
   borderBottom: '1px solid #f0f0f0',
+  flexShrink: 0,
 };
 
 const panelTitleStyle: React.CSSProperties = {
@@ -107,7 +110,7 @@ export default function CompetitionTab({ region }: { region: string }) {
 
   const topReqItems = [...validItems]
     .sort((a, b) => Number(b.REQ_CNT) - Number(a.REQ_CNT))
-    .slice(0, 8)
+    .slice(0, 10)
     .map((i, idx) => ({
       rank: idx + 1,
       type: i.HOUSE_TY || '-',
@@ -117,7 +120,7 @@ export default function CompetitionTab({ region }: { region: string }) {
     }));
 
   return (
-    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+    <div style={{ display: 'flex', gap: '12px', alignItems: 'stretch', height: '100%' }}>
       {/* Left: 2×2 grid */}
       <div
         style={{
@@ -125,15 +128,16 @@ export default function CompetitionTab({ region }: { region: string }) {
           minWidth: 0,
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
+          gridTemplateRows: '1fr 1fr',
           gap: '12px',
         }}
       >
-        {/* Panel 1: Top 12 bar chart */}
+        {/* Panel 1: Top competition rates */}
         <div style={panelStyle}>
           <div style={panelHeaderStyle}>
             <h3 style={panelTitleStyle}>경쟁률 상위</h3>
             {!isLoading && !isError && (
-              <div style={{ display: 'flex', gap: '14px', marginTop: '6px' }}>
+              <div style={{ display: 'flex', gap: '14px', marginTop: '4px' }}>
                 <span style={{ fontSize: '11px', color: '#7a7a7a' }}>
                   최고 <b style={{ color: '#1d1d1f', fontSize: '13px' }}>{maxRate.toFixed(1)}:1</b>
                 </span>
@@ -146,15 +150,15 @@ export default function CompetitionTab({ region }: { region: string }) {
               </div>
             )}
           </div>
-          <div style={{ padding: '12px 16px 16px' }}>
+          <div style={{ flex: 1, minHeight: 0, padding: '10px 12px 12px' }}>
             {isLoading ? (
-              <PlaceholderBox />
+              <Spinner />
             ) : isError || data?.error ? (
               <ErrorState message={data?.error ?? '오류'} />
             ) : top12.length === 0 ? (
               <EmptyState />
             ) : (
-              <ResponsiveContainer width="100%" height={210}>
+              <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={top12} margin={{ top: 4, right: 4, left: -22, bottom: 60 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis dataKey="name" tick={{ fontSize: 8, fill: '#7a7a7a' }} angle={-40} textAnchor="end" interval={0} />
@@ -179,13 +183,13 @@ export default function CompetitionTab({ region }: { region: string }) {
           <div style={panelHeaderStyle}>
             <h3 style={panelTitleStyle}>지역별 평균 경쟁률</h3>
           </div>
-          <div style={{ padding: '12px 16px 16px' }}>
+          <div style={{ flex: 1, minHeight: 0, padding: '10px 12px 12px' }}>
             {isLoading ? (
-              <PlaceholderBox />
+              <Spinner />
             ) : regionChart.length === 0 ? (
               <EmptyState />
             ) : (
-              <ResponsiveContainer width="100%" height={210}>
+              <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={regionChart} layout="vertical" margin={{ top: 4, right: 20, left: 20, bottom: 4 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
                   <XAxis type="number" tick={{ fontSize: 9, fill: '#7a7a7a' }} />
@@ -206,14 +210,14 @@ export default function CompetitionTab({ region }: { region: string }) {
           <div style={panelHeaderStyle}>
             <h3 style={panelTitleStyle}>주택형별 평균 경쟁률</h3>
           </div>
-          <div style={{ padding: '12px 16px 16px' }}>
+          <div style={{ flex: 1, minHeight: 0, padding: '10px 12px 12px' }}>
             {isLoading ? (
-              <PlaceholderBox />
+              <Spinner />
             ) : typeChart.length === 0 ? (
               <EmptyState />
             ) : (
-              <ResponsiveContainer width="100%" height={190}>
-                <BarChart data={typeChart} margin={{ top: 4, right: 4, left: -22, bottom: 48 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={typeChart} margin={{ top: 4, right: 4, left: -22, bottom: 52 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis dataKey="name" tick={{ fontSize: 8, fill: '#7a7a7a' }} angle={-40} textAnchor="end" interval={0} />
                   <YAxis tick={{ fontSize: 9, fill: '#7a7a7a' }} />
@@ -233,47 +237,49 @@ export default function CompetitionTab({ region }: { region: string }) {
           <div style={panelHeaderStyle}>
             <h3 style={panelTitleStyle}>신청건수 상위</h3>
           </div>
-          {isLoading ? (
-            <div style={{ padding: '16px' }}><PlaceholderBox /></div>
-          ) : topReqItems.length === 0 ? (
-            <EmptyState />
-          ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead style={{ backgroundColor: '#f5f5f7' }}>
-                <tr>
-                  {['#', '주택형', '지역', '신청', '경쟁률'].map((h) => (
-                    <th key={h} style={{ padding: '8px 10px', textAlign: 'left', fontSize: '11px', fontWeight: 600, color: '#7a7a7a', whiteSpace: 'nowrap' }}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {topReqItems.map((item) => (
-                  <tr key={item.rank} style={{ borderTop: '1px solid #f0f0f0' }}>
-                    <td style={{ padding: '8px 10px', color: '#b0b0b0', fontSize: '11px', fontWeight: 600 }}>{item.rank}</td>
-                    <td style={{ padding: '8px 10px', fontSize: '12px', color: '#1d1d1f' }}>{item.type}</td>
-                    <td style={{ padding: '8px 10px', fontSize: '11px', color: '#7a7a7a' }}>{item.region}</td>
-                    <td style={{ padding: '8px 10px', fontSize: '12px', color: '#7a7a7a' }}>{item.reqCnt.toLocaleString()}</td>
-                    <td style={{ padding: '8px 10px', fontSize: '12px', color: '#1d1d1f', fontWeight: parseFloat(item.rate) > 10 ? 700 : 400 }}>
-                      {item.rate}:1
-                    </td>
+          <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+            {isLoading ? (
+              <div style={{ padding: '16px' }}><Spinner /></div>
+            ) : topReqItems.length === 0 ? (
+              <EmptyState />
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead style={{ backgroundColor: '#f5f5f7', position: 'sticky', top: 0 }}>
+                  <tr>
+                    {['#', '주택형', '지역', '신청', '경쟁률'].map((h) => (
+                      <th key={h} style={{ padding: '9px 10px', textAlign: 'left', fontSize: '11px', fontWeight: 600, color: '#7a7a7a', whiteSpace: 'nowrap' }}>
+                        {h}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+                </thead>
+                <tbody>
+                  {topReqItems.map((item) => (
+                    <tr key={item.rank} style={{ borderTop: '1px solid #f0f0f0' }}>
+                      <td style={{ padding: '9px 10px', color: '#b0b0b0', fontSize: '11px', fontWeight: 600 }}>{item.rank}</td>
+                      <td style={{ padding: '9px 10px', fontSize: '12px', color: '#1d1d1f' }}>{item.type}</td>
+                      <td style={{ padding: '9px 10px', fontSize: '11px', color: '#7a7a7a' }}>{item.region}</td>
+                      <td style={{ padding: '9px 10px', fontSize: '12px', color: '#7a7a7a' }}>{item.reqCnt.toLocaleString()}</td>
+                      <td style={{ padding: '9px 10px', fontSize: '12px', color: '#1d1d1f', fontWeight: parseFloat(item.rate) > 10 ? 700 : 400 }}>
+                        {item.rate}:1
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Right: 전체 경쟁률 현황 */}
-      <div style={{ ...panelStyle, width: '320px', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
+      {/* Right: 전체 경쟁률 현황 — same height as left grid */}
+      <div style={{ ...panelStyle, width: '320px', flexShrink: 0 }}>
         <div style={panelHeaderStyle}>
           <h3 style={panelTitleStyle}>전체 경쟁률 현황</h3>
         </div>
-        <div style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 178px)' }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
           {isLoading ? (
-            <div style={{ padding: '24px 16px' }}><LoadingState /></div>
+            <div style={{ padding: '24px 16px' }}><Spinner /></div>
           ) : isError || data?.error ? (
             <ErrorState message={data?.error ?? '오류'} />
           ) : items.length === 0 ? (
@@ -299,9 +305,7 @@ export default function CompetitionTab({ region }: { region: string }) {
                   >
                     <td style={{ padding: '9px 12px', color: '#1d1d1f', fontSize: '12px' }}>{item.HOUSE_TY || '-'}</td>
                     <td style={{ padding: '9px 12px', color: '#7a7a7a', fontSize: '11px' }}>{item.RESIDE_SENM || '-'}</td>
-                    <td style={{ padding: '9px 12px', color: '#7a7a7a', fontSize: '12px' }}>
-                      {Number(item.REQ_CNT || 0).toLocaleString()}
-                    </td>
+                    <td style={{ padding: '9px 12px', color: '#7a7a7a', fontSize: '12px' }}>{Number(item.REQ_CNT || 0).toLocaleString()}</td>
                     <td style={{ padding: '9px 12px', fontSize: '12px' }}>
                       <span style={{ fontWeight: parseFloat(item.CMPET_RATE) > 10 ? 700 : 400, color: '#1d1d1f' }}>
                         {parseFloat(item.CMPET_RATE).toFixed(1)}:1
@@ -318,17 +322,17 @@ export default function CompetitionTab({ region }: { region: string }) {
   );
 }
 
-function PlaceholderBox() {
-  return <div style={{ height: '190px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><LoadingState /></div>;
-}
-
-function LoadingState() {
-  return <span style={{ fontSize: '11px', color: '#b0b0b0' }}>로딩 중...</span>;
+function Spinner() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+      <span style={{ fontSize: '11px', color: '#b0b0b0' }}>로딩 중...</span>
+    </div>
+  );
 }
 
 function EmptyState() {
   return (
-    <div style={{ padding: '24px 16px', textAlign: 'center' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
       <span style={{ fontSize: '11px', color: '#b0b0b0' }}>데이터가 없습니다.</span>
     </div>
   );
@@ -336,7 +340,7 @@ function EmptyState() {
 
 function ErrorState({ message }: { message: string }) {
   return (
-    <div style={{ padding: '24px 16px', textAlign: 'center' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
       <span style={{ fontSize: '11px', color: '#7a7a7a' }}>{message}</span>
     </div>
   );

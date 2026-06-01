@@ -56,11 +56,14 @@ const panelStyle: React.CSSProperties = {
   border: '1px solid #e0e0e0',
   borderRadius: '18px',
   overflow: 'hidden',
+  display: 'flex',
+  flexDirection: 'column',
 };
 
 const panelHeaderStyle: React.CSSProperties = {
-  padding: '14px 20px 12px 20px',
+  padding: '12px 20px 10px 20px',
   borderBottom: '1px solid #f0f0f0',
+  flexShrink: 0,
 };
 
 const panelTitleStyle: React.CSSProperties = {
@@ -127,7 +130,7 @@ export default function WinnerTab({ region }: { region: string }) {
     .slice(0, 10);
 
   return (
-    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+    <div style={{ display: 'flex', gap: '12px', alignItems: 'stretch', height: '100%' }}>
       {/* Left: 2×2 grid */}
       <div
         style={{
@@ -135,6 +138,7 @@ export default function WinnerTab({ region }: { region: string }) {
           minWidth: 0,
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
+          gridTemplateRows: '1fr 1fr',
           gap: '12px',
         }}
       >
@@ -143,26 +147,26 @@ export default function WinnerTab({ region }: { region: string }) {
           <div style={panelHeaderStyle}>
             <h3 style={panelTitleStyle}>연령대별 당첨자 분포</h3>
             {latest && (
-              <span style={{ fontSize: '10px', color: '#7a7a7a', marginTop: '3px', display: 'block' }}>
+              <span style={{ fontSize: '10px', color: '#7a7a7a', marginTop: '2px', display: 'block' }}>
                 기준일 {latest.STAT_DE}
               </span>
             )}
           </div>
-          <div style={{ padding: '12px 16px 16px' }}>
+          <div style={{ flex: 1, minHeight: 0, padding: '10px 12px 12px' }}>
             {isLoading ? (
-              <PlaceholderBox />
+              <Spinner />
             ) : isError || data?.error ? (
               <ErrorState message={data?.error ?? '오류'} />
             ) : ageChartData.length === 0 ? (
               <EmptyState />
             ) : (
-              <ResponsiveContainer width="100%" height={210}>
+              <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={ageChartData}
                     cx="50%"
                     cy="50%"
-                    outerRadius="68%"
+                    outerRadius="65%"
                     dataKey="value"
                     label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
                     labelLine={false}
@@ -186,13 +190,13 @@ export default function WinnerTab({ region }: { region: string }) {
           <div style={panelHeaderStyle}>
             <h3 style={panelTitleStyle}>지역별 당첨자 수</h3>
           </div>
-          <div style={{ padding: '12px 16px 16px' }}>
+          <div style={{ flex: 1, minHeight: 0, padding: '10px 12px 12px' }}>
             {isLoading ? (
-              <PlaceholderBox />
+              <Spinner />
             ) : areaChart.length === 0 ? (
               <EmptyState />
             ) : (
-              <ResponsiveContainer width="100%" height={210}>
+              <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={areaChart} layout="vertical" margin={{ top: 4, right: 12, left: 20, bottom: 4 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
                   <XAxis type="number" tick={{ fontSize: 9, fill: '#7a7a7a' }} />
@@ -213,13 +217,13 @@ export default function WinnerTab({ region }: { region: string }) {
           <div style={panelHeaderStyle}>
             <h3 style={panelTitleStyle}>연령대별 누계 당첨자</h3>
           </div>
-          <div style={{ padding: '12px 16px 16px' }}>
+          <div style={{ flex: 1, minHeight: 0, padding: '10px 12px 12px' }}>
             {isLoading ? (
-              <PlaceholderBox />
+              <Spinner />
             ) : ageTotalChart.every((d) => d.value === 0) ? (
               <EmptyState />
             ) : (
-              <ResponsiveContainer width="100%" height={190}>
+              <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={ageTotalChart} margin={{ top: 4, right: 4, left: -12, bottom: 8 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#7a7a7a' }} />
@@ -240,13 +244,13 @@ export default function WinnerTab({ region }: { region: string }) {
           <div style={panelHeaderStyle}>
             <h3 style={panelTitleStyle}>지역별 평균 경쟁률</h3>
           </div>
-          <div style={{ padding: '12px 16px 16px' }}>
+          <div style={{ flex: 1, minHeight: 0, padding: '10px 12px 12px' }}>
             {isLoading ? (
-              <PlaceholderBox />
+              <Spinner />
             ) : cmpetAreaChart.length === 0 ? (
               <EmptyState />
             ) : (
-              <ResponsiveContainer width="100%" height={190}>
+              <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={cmpetAreaChart} layout="vertical" margin={{ top: 4, right: 20, left: 20, bottom: 4 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
                   <XAxis type="number" tick={{ fontSize: 9, fill: '#7a7a7a' }} />
@@ -263,14 +267,14 @@ export default function WinnerTab({ region }: { region: string }) {
         </div>
       </div>
 
-      {/* Right: 통계 테이블 */}
-      <div style={{ ...panelStyle, width: '320px', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
+      {/* Right: 연령별+지역별 통계 — same height as left grid */}
+      <div style={{ ...panelStyle, width: '320px', flexShrink: 0 }}>
         <div style={panelHeaderStyle}>
           <h3 style={panelTitleStyle}>연령별 + 지역별 통계</h3>
         </div>
-        <div style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 178px)' }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
           {isLoading ? (
-            <div style={{ padding: '24px 16px' }}><LoadingState /></div>
+            <div style={{ padding: '24px 16px' }}><Spinner /></div>
           ) : isError || data?.error ? (
             <ErrorState message={data?.error ?? '오류'} />
           ) : (
@@ -302,7 +306,6 @@ export default function WinnerTab({ region }: { region: string }) {
                   </table>
                 </>
               )}
-
               {areaItems.length > 0 && (
                 <>
                   <div style={{ padding: '7px 16px 5px', fontSize: '10px', fontWeight: 600, color: '#7a7a7a', letterSpacing: '0.05em', backgroundColor: '#f5f5f7', borderTop: '1px solid #e0e0e0' }}>
@@ -338,17 +341,17 @@ export default function WinnerTab({ region }: { region: string }) {
   );
 }
 
-function PlaceholderBox() {
-  return <div style={{ height: '190px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><LoadingState /></div>;
-}
-
-function LoadingState() {
-  return <span style={{ fontSize: '11px', color: '#b0b0b0' }}>로딩 중...</span>;
+function Spinner() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+      <span style={{ fontSize: '11px', color: '#b0b0b0' }}>로딩 중...</span>
+    </div>
+  );
 }
 
 function EmptyState() {
   return (
-    <div style={{ padding: '24px 16px', textAlign: 'center' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
       <span style={{ fontSize: '11px', color: '#b0b0b0' }}>데이터가 없습니다.</span>
     </div>
   );
@@ -356,7 +359,7 @@ function EmptyState() {
 
 function ErrorState({ message }: { message: string }) {
   return (
-    <div style={{ padding: '24px 16px', textAlign: 'center' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
       <span style={{ fontSize: '11px', color: '#7a7a7a' }}>{message}</span>
     </div>
   );

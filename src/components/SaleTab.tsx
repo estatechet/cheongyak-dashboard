@@ -58,11 +58,14 @@ const panelStyle: React.CSSProperties = {
   border: '1px solid #e0e0e0',
   borderRadius: '18px',
   overflow: 'hidden',
+  display: 'flex',
+  flexDirection: 'column',
 };
 
 const panelHeaderStyle: React.CSSProperties = {
-  padding: '14px 20px 12px 20px',
+  padding: '12px 20px 10px 20px',
   borderBottom: '1px solid #f0f0f0',
+  flexShrink: 0,
 };
 
 const panelTitleStyle: React.CSSProperties = {
@@ -147,14 +150,15 @@ export default function SaleTab({ region }: { region: string }) {
     .map(([name, count], i) => ({ rank: i + 1, name, count }));
 
   return (
-    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-      {/* Left: 2×2 chart grid */}
+    <div style={{ display: 'flex', gap: '12px', alignItems: 'stretch', height: '100%' }}>
+      {/* Left: 2×2 grid fills all height equally */}
       <div
         style={{
           flex: 1,
           minWidth: 0,
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
+          gridTemplateRows: '1fr 1fr',
           gap: '12px',
         }}
       >
@@ -163,22 +167,16 @@ export default function SaleTab({ region }: { region: string }) {
           <div style={panelHeaderStyle}>
             <h3 style={panelTitleStyle}>지역별 공고 수</h3>
           </div>
-          <div style={{ padding: '12px 16px 16px' }}>
+          <div style={{ flex: 1, minHeight: 0, padding: '10px 12px 12px' }}>
             {chartLoading ? (
-              <PlaceholderBox />
+              <Spinner />
             ) : regionChartData.length === 0 ? (
               <EmptyState />
             ) : (
-              <ResponsiveContainer width="100%" height={210}>
-                <BarChart data={regionChartData} margin={{ top: 4, right: 4, left: -22, bottom: 54 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={regionChartData} margin={{ top: 4, right: 4, left: -22, bottom: 56 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis
-                    dataKey="name"
-                    tick={{ fontSize: 9, fill: '#7a7a7a' }}
-                    angle={-40}
-                    textAnchor="end"
-                    interval={0}
-                  />
+                  <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#7a7a7a' }} angle={-40} textAnchor="end" interval={0} />
                   <YAxis tick={{ fontSize: 9, fill: '#7a7a7a' }} />
                   <Tooltip
                     formatter={(v) => [`${v}건`, '공고 수']}
@@ -200,11 +198,11 @@ export default function SaleTab({ region }: { region: string }) {
           <div style={panelHeaderStyle}>
             <h3 style={panelTitleStyle}>공급세대 규모 분포</h3>
           </div>
-          <div style={{ padding: '12px 16px 16px' }}>
+          <div style={{ flex: 1, minHeight: 0, padding: '10px 12px 12px' }}>
             {chartLoading ? (
-              <PlaceholderBox />
+              <Spinner />
             ) : (
-              <ResponsiveContainer width="100%" height={210}>
+              <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={supplyChartData} margin={{ top: 4, right: 4, left: -22, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#7a7a7a' }} interval={0} />
@@ -225,22 +223,16 @@ export default function SaleTab({ region }: { region: string }) {
           <div style={panelHeaderStyle}>
             <h3 style={panelTitleStyle}>월별 공고 추이</h3>
           </div>
-          <div style={{ padding: '12px 16px 16px' }}>
+          <div style={{ flex: 1, minHeight: 0, padding: '10px 12px 12px' }}>
             {chartLoading ? (
-              <PlaceholderBox />
+              <Spinner />
             ) : monthChartData.length === 0 ? (
               <EmptyState />
             ) : (
-              <ResponsiveContainer width="100%" height={190}>
-                <BarChart data={monthChartData} margin={{ top: 4, right: 4, left: -22, bottom: 40 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthChartData} margin={{ top: 4, right: 4, left: -22, bottom: 44 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis
-                    dataKey="name"
-                    tick={{ fontSize: 9, fill: '#7a7a7a' }}
-                    angle={-40}
-                    textAnchor="end"
-                    interval={0}
-                  />
+                  <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#7a7a7a' }} angle={-40} textAnchor="end" interval={0} />
                   <YAxis tick={{ fontSize: 9, fill: '#7a7a7a' }} />
                   <Tooltip
                     formatter={(v) => [`${v}건`, '공고 수']}
@@ -258,41 +250,43 @@ export default function SaleTab({ region }: { region: string }) {
           <div style={panelHeaderStyle}>
             <h3 style={panelTitleStyle}>시공사 공급 현황</h3>
           </div>
-          {chartLoading ? (
-            <div style={{ padding: '16px' }}><PlaceholderBox /></div>
-          ) : builderList.length === 0 ? (
-            <EmptyState />
-          ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <tbody>
-                {builderList.map((item) => (
-                  <tr key={item.rank} style={{ borderTop: '1px solid #f0f0f0' }}>
-                    <td style={{ padding: '9px 12px', width: '24px', color: '#b0b0b0', fontSize: '11px', fontWeight: 600 }}>
-                      {item.rank}
-                    </td>
-                    <td style={{ padding: '9px 12px', fontSize: '12px', color: '#1d1d1f' }}>
-                      {item.name}
-                    </td>
-                    <td style={{ padding: '9px 12px', fontSize: '12px', color: '#7a7a7a', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                      {item.count}건
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+          <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+            {chartLoading ? (
+              <div style={{ padding: '16px' }}><Spinner /></div>
+            ) : builderList.length === 0 ? (
+              <EmptyState />
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <tbody>
+                  {builderList.map((item) => (
+                    <tr key={item.rank} style={{ borderTop: '1px solid #f0f0f0' }}>
+                      <td style={{ padding: '10px 12px', width: '24px', color: '#b0b0b0', fontSize: '11px', fontWeight: 600 }}>
+                        {item.rank}
+                      </td>
+                      <td style={{ padding: '10px 12px', fontSize: '13px', color: '#1d1d1f' }}>
+                        {item.name}
+                      </td>
+                      <td style={{ padding: '10px 12px', fontSize: '13px', color: '#7a7a7a', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                        {item.count}건
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Right: 공고 목록 */}
-      <div style={{ ...panelStyle, width: '320px', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
+      {/* Right: 공고 목록 — same height as left grid */}
+      <div style={{ ...panelStyle, width: '320px', flexShrink: 0 }}>
         <div style={{ ...panelHeaderStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <h3 style={panelTitleStyle}>공고 목록</h3>
           <span style={{ fontSize: '11px', color: '#7a7a7a' }}>총 {total.toLocaleString()}건</span>
         </div>
-        <div style={{ overflowY: 'auto', padding: '0 16px', maxHeight: 'calc(100vh - 178px)' }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '0 16px' }}>
           {listLoading ? (
-            <div style={{ padding: '24px 0' }}><LoadingState /></div>
+            <div style={{ padding: '24px 0' }}><Spinner /></div>
           ) : listError || listData?.error ? (
             <ErrorState message={listData?.error ?? '데이터를 불러오지 못했습니다.'} />
           ) : items.length === 0 ? (
@@ -302,26 +296,16 @@ export default function SaleTab({ region }: { region: string }) {
               {items.map((item, idx) => {
                 const isExpanded = expandedIdx === idx;
                 return (
-                  <div
-                    key={idx}
-                    style={{ borderBottom: idx < items.length - 1 ? '1px solid #f0f0f0' : 'none' }}
-                  >
+                  <div key={idx} style={{ borderBottom: idx < items.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
                     <div
                       onClick={() => setExpandedIdx(isExpanded ? null : idx)}
-                      style={{ paddingTop: '11px', paddingBottom: '11px', cursor: 'pointer' }}
+                      style={{ paddingTop: '10px', paddingBottom: '10px', cursor: 'pointer' }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                        <span
-                          style={{
-                            fontSize: '13px',
-                            fontWeight: 600,
-                            color: '#1d1d1f',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            flex: 1,
-                          }}
-                        >
+                        <span style={{
+                          fontSize: '13px', fontWeight: 600, color: '#1d1d1f',
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1,
+                        }}>
                           {item.HOUSE_NM}
                         </span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
@@ -329,65 +313,42 @@ export default function SaleTab({ region }: { region: string }) {
                           <span style={{ fontSize: '9px', color: '#b0b0b0' }}>{isExpanded ? '▾' : '▸'}</span>
                         </div>
                       </div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 12px', marginTop: '5px' }}>
-                        <span style={{ fontSize: '11px', color: '#7a7a7a' }}>
-                          {Number(item.TOT_SUPLY_HSHLDCO || 0).toLocaleString()}세대
-                        </span>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 10px', marginTop: '4px' }}>
+                        <span style={{ fontSize: '11px', color: '#7a7a7a' }}>{Number(item.TOT_SUPLY_HSHLDCO || 0).toLocaleString()}세대</span>
                         <span style={{ fontSize: '11px', color: '#7a7a7a' }}>공고 {fmt(item.RCRIT_PBLANC_DE)}</span>
                         <span style={{ fontSize: '11px', color: '#7a7a7a' }}>1순위 {fmt(item.GNRL_RNK1_CRSPAREA_RCPTDE)}</span>
                       </div>
                     </div>
-
                     {isExpanded && (
-                      <div
-                        style={{
-                          backgroundColor: '#f5f5f7',
-                          borderRadius: '10px',
-                          padding: '10px 12px',
-                          marginBottom: '11px',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '5px',
-                        }}
-                      >
+                      <div style={{
+                        backgroundColor: '#f5f5f7', borderRadius: '10px',
+                        padding: '10px 12px', marginBottom: '10px',
+                        display: 'flex', flexDirection: 'column', gap: '5px',
+                      }}>
                         {item.HSSPLY_ADRES && <DetailRow label="주소" value={item.HSSPLY_ADRES} />}
                         {item.BSNS_MBY_NM && <DetailRow label="사업주체" value={item.BSNS_MBY_NM} />}
                         {item.CNSTRCT_ENTRPS_NM && <DetailRow label="시공사" value={item.CNSTRCT_ENTRPS_NM} />}
                         {item.SPSPLY_RCEPT_BGNDE && (
                           <DetailRow label="특별공급" value={`${fmt(item.SPSPLY_RCEPT_BGNDE)} ~ ${fmt(item.SPSPLY_RCEPT_ENDDE)}`} />
                         )}
-                        <DetailRow
-                          label="1순위"
-                          value={`${fmt(item.GNRL_RNK1_CRSPAREA_RCPTDE)} ~ ${fmt(item.GNRL_RNK1_CRSPAREA_ENDDE)}`}
-                        />
+                        <DetailRow label="1순위" value={`${fmt(item.GNRL_RNK1_CRSPAREA_RCPTDE)} ~ ${fmt(item.GNRL_RNK1_CRSPAREA_ENDDE)}`} />
                       </div>
                     )}
                   </div>
                 );
               })}
-
               {totalPages > 1 && (
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', padding: '12px 0' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', padding: '10px 0' }}>
                   <button
                     onClick={() => { setPage((p) => Math.max(1, p - 1)); setExpandedIdx(null); }}
                     disabled={page === 1}
-                    style={{
-                      backgroundColor: page === 1 ? '#f0f0f0' : '#1d1d1f',
-                      color: page === 1 ? '#b0b0b0' : '#ffffff',
-                      borderRadius: '6px', padding: '4px 12px', fontSize: '11px', border: 'none',
-                      cursor: page === 1 ? 'not-allowed' : 'pointer',
-                    }}
+                    style={{ backgroundColor: page === 1 ? '#f0f0f0' : '#1d1d1f', color: page === 1 ? '#b0b0b0' : '#fff', borderRadius: '6px', padding: '4px 12px', fontSize: '11px', border: 'none', cursor: page === 1 ? 'not-allowed' : 'pointer' }}
                   >이전</button>
                   <span style={{ fontSize: '11px', color: '#7a7a7a' }}>{page} / {totalPages}</span>
                   <button
                     onClick={() => { setPage((p) => Math.min(totalPages, p + 1)); setExpandedIdx(null); }}
                     disabled={page === totalPages}
-                    style={{
-                      backgroundColor: page === totalPages ? '#f0f0f0' : '#1d1d1f',
-                      color: page === totalPages ? '#b0b0b0' : '#ffffff',
-                      borderRadius: '6px', padding: '4px 12px', fontSize: '11px', border: 'none',
-                      cursor: page === totalPages ? 'not-allowed' : 'pointer',
-                    }}
+                    style={{ backgroundColor: page === totalPages ? '#f0f0f0' : '#1d1d1f', color: page === totalPages ? '#b0b0b0' : '#fff', borderRadius: '6px', padding: '4px 12px', fontSize: '11px', border: 'none', cursor: page === totalPages ? 'not-allowed' : 'pointer' }}
                   >다음</button>
                 </div>
               )}
@@ -408,17 +369,17 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function PlaceholderBox() {
-  return <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><LoadingState /></div>;
-}
-
-function LoadingState() {
-  return <span style={{ fontSize: '11px', color: '#b0b0b0' }}>로딩 중...</span>;
+function Spinner() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+      <span style={{ fontSize: '11px', color: '#b0b0b0' }}>로딩 중...</span>
+    </div>
+  );
 }
 
 function EmptyState() {
   return (
-    <div style={{ padding: '24px 16px', textAlign: 'center' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
       <span style={{ fontSize: '11px', color: '#b0b0b0' }}>데이터가 없습니다.</span>
     </div>
   );
@@ -426,7 +387,7 @@ function EmptyState() {
 
 function ErrorState({ message }: { message: string }) {
   return (
-    <div style={{ padding: '24px 16px', textAlign: 'center' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
       <span style={{ fontSize: '11px', color: '#7a7a7a' }}>{message}</span>
     </div>
   );
