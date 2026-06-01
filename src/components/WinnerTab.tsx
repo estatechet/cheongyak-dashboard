@@ -30,24 +30,9 @@ interface AreaStatItem {
   CMPET_RT: string;
 }
 
-interface CmpetAreaItem {
-  STAT_DE: string;
-  AREA_NM: string;
-  CMPET_RT: string;
-  APPLY_CNT?: string;
-  PRZWNER_CNT?: string;
-}
-
-interface CompetitionItem {
-  RESIDE_SENM: string;
-  CMPET_RATE: string;
-}
-
 interface ApiResponse {
   ageData?: { totalCount?: number; data?: AgeStatItem[] };
   areaData?: { totalCount?: number; data?: AreaStatItem[] };
-  cmpetAreaData?: { totalCount?: number; data?: CmpetAreaItem[] };
-  competitionData?: { totalCount?: number; data?: CompetitionItem[] };
   error?: string;
 }
 
@@ -90,8 +75,6 @@ export default function WinnerTab({ region }: { region: string }) {
 
   const ageItems = data?.ageData?.data ?? [];
   const areaItems = data?.areaData?.data ?? [];
-  const cmpetItems = data?.cmpetAreaData?.data ?? [];
-  const competitionItems = data?.competitionData?.data ?? [];
 
   const latest = ageItems[ageItems.length - 1];
   const ageChartData = latest
@@ -103,16 +86,6 @@ export default function WinnerTab({ region }: { region: string }) {
       ].filter((d) => d.value > 0)
     : [];
 
-  const areaMap = new Map<string, number>();
-  areaItems.forEach((i) => {
-    const key = i.AREA_NM || '기타';
-    areaMap.set(key, (areaMap.get(key) ?? 0) + Number(i.PRZWNER_CNT || 0));
-  });
-  const areaChart = Array.from(areaMap.entries())
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 10);
-
   const ageTotals = { '30대': 0, '40대': 0, '50대': 0, '60대+': 0 };
   ageItems.forEach((item) => {
     ageTotals['30대'] += Number(item.AGE_30 || 0);
@@ -122,42 +95,16 @@ export default function WinnerTab({ region }: { region: string }) {
   });
   const ageTotalChart = Object.entries(ageTotals).map(([name, value]) => ({ name, value }));
 
-  // Build region competition chart: prefer dedicated API, fall back to competition data
-  const cmpetAreaMap = new Map<string, { total: number; count: number }>();
-  if (cmpetItems.length > 0) {
-    cmpetItems.forEach((i) => {
-      const key = i.AREA_NM || '기타';
-      const v = parseFloat(i.CMPET_RT || '0');
-      if (v > 0) {
-        const ex = cmpetAreaMap.get(key) ?? { total: 0, count: 0 };
-        cmpetAreaMap.set(key, { total: ex.total + v, count: ex.count + 1 });
-      }
-    });
-  } else {
-    competitionItems.forEach((i) => {
-      const key = i.RESIDE_SENM || '기타';
-      const v = parseFloat(i.CMPET_RATE || '0');
-      if (v > 0) {
-        const ex = cmpetAreaMap.get(key) ?? { total: 0, count: 0 };
-        cmpetAreaMap.set(key, { total: ex.total + v, count: ex.count + 1 });
-      }
-    });
-  }
-  const cmpetAreaChart = Array.from(cmpetAreaMap.entries())
-    .map(([name, { total, count }]) => ({ name, rate: parseFloat((total / count).toFixed(1)) }))
-    .sort((a, b) => b.rate - a.rate)
-    .slice(0, 10);
-
   return (
     <div style={{ display: 'flex', gap: '12px', alignItems: 'stretch', height: '100%' }}>
-      {/* Left: 2×2 grid */}
+      {/* Left: 1×2 grid (2 charts side by side, full height) */}
       <div
         style={{
           flex: 1,
           minWidth: 0,
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
-          gridTemplateRows: '1fr 1fr',
+          gridTemplateRows: '1fr',
           gap: '12px',
         }}
       >
@@ -204,34 +151,7 @@ export default function WinnerTab({ region }: { region: string }) {
           </div>
         </div>
 
-        {/* Panel 2: Regional winner horizontal bar */}
-        <div style={panelStyle}>
-          <div style={panelHeaderStyle}>
-            <h3 style={panelTitleStyle}>지역별 당첨자 수</h3>
-          </div>
-          <div style={{ flex: 1, minHeight: 0, padding: '10px 12px 12px' }}>
-            {isLoading ? (
-              <Spinner />
-            ) : areaChart.length === 0 ? (
-              <ApiUnsupportedState message="당첨자 지역별 통계 API가 현재 데이터를 제공하지 않습니다." />
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={areaChart} layout="vertical" margin={{ top: 4, right: 12, left: 20, bottom: 4 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
-                  <XAxis type="number" tick={{ fontSize: 9, fill: '#7a7a7a' }} />
-                  <YAxis dataKey="name" type="category" tick={{ fontSize: 9, fill: '#7a7a7a' }} width={44} />
-                  <Tooltip
-                    formatter={(v) => [Number(v).toLocaleString() + '명', '당첨자']}
-                    contentStyle={{ fontSize: '11px', border: '1px solid #e0e0e0', borderRadius: '8px' }}
-                  />
-                  <Bar dataKey="value" fill="#1d1d1f" radius={[0, 3, 3, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </div>
-
-        {/* Panel 3: Aggregated age totals */}
+        {/* Panel 2: Aggregated age totals */}
         <div style={panelStyle}>
           <div style={panelHeaderStyle}>
             <h3 style={panelTitleStyle}>연령대별 누계 당첨자</h3>
@@ -252,33 +172,6 @@ export default function WinnerTab({ region }: { region: string }) {
                     contentStyle={{ fontSize: '11px', border: '1px solid #e0e0e0', borderRadius: '8px' }}
                   />
                   <Bar dataKey="value" fill="#555555" radius={[3, 3, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </div>
-
-        {/* Panel 4: Regional competition rate */}
-        <div style={panelStyle}>
-          <div style={panelHeaderStyle}>
-            <h3 style={panelTitleStyle}>지역별 평균 경쟁률</h3>
-          </div>
-          <div style={{ flex: 1, minHeight: 0, padding: '10px 12px 12px' }}>
-            {isLoading ? (
-              <Spinner />
-            ) : cmpetAreaChart.length === 0 ? (
-              <EmptyState />
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={cmpetAreaChart} layout="vertical" margin={{ top: 4, right: 20, left: 20, bottom: 4 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
-                  <XAxis type="number" tick={{ fontSize: 9, fill: '#7a7a7a' }} />
-                  <YAxis dataKey="name" type="category" tick={{ fontSize: 9, fill: '#7a7a7a' }} width={44} />
-                  <Tooltip
-                    formatter={(v) => [`${v}:1`, '평균 경쟁률']}
-                    contentStyle={{ fontSize: '11px', border: '1px solid #e0e0e0', borderRadius: '8px' }}
-                  />
-                  <Bar dataKey="rate" fill="#1d1d1f" radius={[0, 3, 3, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -372,15 +265,6 @@ function EmptyState() {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
       <span style={{ fontSize: '11px', color: '#b0b0b0' }}>데이터가 없습니다.</span>
-    </div>
-  );
-}
-
-function ApiUnsupportedState({ message }: { message: string }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '6px', padding: '12px' }}>
-      <span style={{ fontSize: '18px', color: '#c8c8c8' }}>—</span>
-      <span style={{ fontSize: '11px', color: '#b0b0b0', textAlign: 'center', lineHeight: '1.5' }}>{message}</span>
     </div>
   );
 }
