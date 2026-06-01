@@ -16,96 +16,75 @@ function fetchKpi(region: string): Promise<KpiData> {
   return fetch(`/api/subscription?${params}`).then((r) => r.json());
 }
 
-export default function KpiCards({ region }: { region: string }) {
+export default function KpiSlimBar({ region }: { region: string }) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['kpi', region],
     queryFn: () => fetchKpi(region),
   });
 
-  const cards = [
-    {
-      label: '이번달 공고 건수',
-      value: isLoading ? '...' : isError ? '-' : `${(data?.saleCount ?? 0).toLocaleString()}건`,
-      sub: '분양 공고 총계',
-      valueColor: '#0066cc',
-    },
-    {
-      label: '최고 경쟁률',
-      value: isLoading ? '...' : isError ? '-' : `${(data?.maxRate ?? 0).toFixed(1)}:1`,
-      sub: '전국 기준',
-      valueColor: '#1d1d1f',
-    },
-    {
-      label: '평균 경쟁률',
-      value: isLoading ? '...' : isError ? '-' : `${(data?.avgRate ?? 0).toFixed(1)}:1`,
-      sub: '전체 평균',
-      valueColor: '#1d1d1f',
-    },
-    {
-      label: '최다 당첨 연령대',
-      value: isLoading ? '...' : isError ? '-' : (data?.topAge ?? '-'),
-      sub: '최신 통계 기준',
-      valueColor: '#0066cc',
-    },
-  ];
+  const dash = '—';
+  const saleCount = isLoading ? dash : isError ? dash : `${(data?.saleCount ?? 0).toLocaleString()}건`;
+  const maxRate = isLoading ? dash : isError ? dash : `${(data?.maxRate ?? 0).toFixed(1)}:1`;
+  const avgRate = isLoading ? dash : isError ? dash : `${(data?.avgRate ?? 0).toFixed(1)}:1`;
+  const topAge = isLoading ? dash : isError ? dash : (data?.topAge ?? dash);
+
+  const loading = isLoading;
 
   return (
     <div
       style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(2, 1fr)',
-        gap: '20px',
-        marginBottom: '32px',
+        height: '36px',
+        backgroundColor: '#ffffff',
+        borderBottom: '1px solid #e0e0e0',
+        display: 'flex',
+        alignItems: 'center',
+        paddingLeft: '24px',
+        paddingRight: '24px',
+        gap: 0,
+        flexShrink: 0,
       }}
-      className="lg:grid-cols-4-kpi"
     >
-      {cards.map((card) => (
-        <div
-          key={card.label}
-          style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #e0e0e0',
-            borderRadius: '18px',
-            padding: '24px',
-          }}
-        >
-          <p
-            style={{
-              fontSize: '14px',
-              fontWeight: 600,
-              letterSpacing: '-0.224px',
-              color: '#7a7a7a',
-              margin: 0,
-            }}
-          >
-            {card.label}
-          </p>
-          <p
-            style={{
-              fontSize: '34px',
-              fontWeight: 600,
-              letterSpacing: '-0.374px',
-              color: card.valueColor,
-              marginTop: '8px',
-              marginBottom: 0,
-            }}
-          >
-            {card.value}
-          </p>
-          <p
-            style={{
-              fontSize: '12px',
-              fontWeight: 400,
-              letterSpacing: '-0.12px',
-              color: '#7a7a7a',
-              marginTop: '4px',
-              marginBottom: 0,
-            }}
-          >
-            {card.sub}
-          </p>
-        </div>
-      ))}
+      <KpiItem label="이번달 공고" value={saleCount} loading={loading} />
+      <Divider />
+      <KpiItem label="최고경쟁률" value={maxRate} loading={loading} />
+      <Divider />
+      <KpiItem label="평균경쟁률" value={avgRate} loading={loading} />
+      <Divider />
+      <KpiItem label="최다당첨" value={topAge} loading={loading} />
     </div>
+  );
+}
+
+function KpiItem({ label, value, loading }: { label: string; value: string; loading: boolean }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+      <span style={{ fontSize: '11px', color: '#7a7a7a' }}>{label}</span>
+      <span
+        style={{
+          fontSize: '11px',
+          fontWeight: 600,
+          color: loading ? '#b0b0b0' : '#1d1d1f',
+          marginLeft: '6px',
+        }}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function Divider() {
+  return (
+    <span
+      style={{
+        color: '#e0e0e0',
+        marginLeft: '24px',
+        marginRight: '24px',
+        fontSize: '11px',
+        userSelect: 'none',
+      }}
+    >
+      |
+    </span>
   );
 }

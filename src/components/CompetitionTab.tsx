@@ -29,11 +29,7 @@ interface ApiResponse {
   error?: string;
 }
 
-// Progressive opacity from primary for top bar chart
-function topBarColor(i: number): string {
-  const opacity = Math.max(0.3, 1 - i * 0.055);
-  return `rgba(0, 102, 204, ${opacity})`;
-}
+const MONO_SHADES = ['#1d1d1f', '#333333', '#555555', '#7a7a7a', '#999999', '#b0b0b0', '#c8c8c8', '#e0e0e0'];
 
 async function fetchCompetition(region: string): Promise<ApiResponse> {
   const params = new URLSearchParams({ type: 'competition' });
@@ -41,11 +37,27 @@ async function fetchCompetition(region: string): Promise<ApiResponse> {
   return fetch(`/api/subscription?${params}`).then((r) => r.json());
 }
 
-const cardStyle: React.CSSProperties = {
+const panelStyle: React.CSSProperties = {
   backgroundColor: '#ffffff',
   border: '1px solid #e0e0e0',
   borderRadius: '18px',
-  padding: '24px',
+  display: 'flex',
+  flexDirection: 'column',
+  overflow: 'hidden',
+};
+
+const panelHeaderStyle: React.CSSProperties = {
+  padding: '16px 20px 12px 20px',
+  borderBottom: '1px solid #f0f0f0',
+  flexShrink: 0,
+};
+
+const panelTitleStyle: React.CSSProperties = {
+  fontSize: '13px',
+  fontWeight: 600,
+  letterSpacing: '-0.2px',
+  color: '#1d1d1f',
+  margin: 0,
 };
 
 export default function CompetitionTab({ region }: { region: string }) {
@@ -54,13 +66,8 @@ export default function CompetitionTab({ region }: { region: string }) {
     queryFn: () => fetchCompetition(region),
   });
 
-  if (isLoading) return <Spinner />;
-  if (isError || data?.error) return <ErrorBox message={data?.error ?? '데이터를 불러오지 못했습니다.'} />;
-
   const items = data?.data ?? [];
   const total = data?.totalCount ?? 0;
-
-  if (items.length === 0) return <EmptyState />;
 
   const validItems = items.filter((i) => parseFloat(i.CMPET_RATE) > 0);
   const maxRate = validItems.length > 0 ? Math.max(...validItems.map((i) => parseFloat(i.CMPET_RATE))) : 0;
@@ -91,246 +98,186 @@ export default function CompetitionTab({ region }: { region: string }) {
     .slice(0, 12);
 
   return (
-    <div>
-      {/* Stat Cards */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '20px',
-          marginBottom: '24px',
-        }}
-      >
-        <div style={cardStyle}>
-          <p style={{ fontSize: '14px', fontWeight: 600, letterSpacing: '-0.224px', color: '#7a7a7a', margin: 0 }}>
-            최고 경쟁률
-          </p>
-          <p style={{ fontSize: '34px', fontWeight: 600, letterSpacing: '-0.374px', color: '#1d1d1f', margin: '8px 0 0 0' }}>
-            {maxRate.toFixed(1)}:1
-          </p>
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr 1.5fr',
+        gap: '12px',
+        height: '100%',
+      }}
+    >
+      {/* Panel 1: Top 15 bar chart */}
+      <div style={panelStyle}>
+        <div style={panelHeaderStyle}>
+          <h3 style={panelTitleStyle}>경쟁률 상위</h3>
+          {!isLoading && !isError && (
+            <div style={{ display: 'flex', gap: '16px', marginTop: '8px' }}>
+              <span style={{ fontSize: '11px', color: '#7a7a7a' }}>
+                최고 <b style={{ color: '#1d1d1f', fontSize: '13px' }}>{maxRate.toFixed(1)}:1</b>
+              </span>
+              <span style={{ fontSize: '11px', color: '#7a7a7a' }}>
+                평균 <b style={{ color: '#1d1d1f', fontSize: '13px' }}>{avgRate.toFixed(1)}:1</b>
+              </span>
+              <span style={{ fontSize: '11px', color: '#7a7a7a' }}>
+                조회 <b style={{ color: '#1d1d1f', fontSize: '13px' }}>{total.toLocaleString()}건</b>
+              </span>
+            </div>
+          )}
         </div>
-        <div style={cardStyle}>
-          <p style={{ fontSize: '14px', fontWeight: 600, letterSpacing: '-0.224px', color: '#7a7a7a', margin: 0 }}>
-            평균 경쟁률
-          </p>
-          <p style={{ fontSize: '34px', fontWeight: 600, letterSpacing: '-0.374px', color: '#0066cc', margin: '8px 0 0 0' }}>
-            {avgRate.toFixed(1)}:1
-          </p>
-        </div>
-        <div style={cardStyle}>
-          <p style={{ fontSize: '14px', fontWeight: 600, letterSpacing: '-0.224px', color: '#7a7a7a', margin: 0 }}>
-            총 조회건수
-          </p>
-          <p style={{ fontSize: '34px', fontWeight: 600, letterSpacing: '-0.374px', color: '#7a7a7a', margin: '8px 0 0 0' }}>
-            {total.toLocaleString()}건
-          </p>
-        </div>
-      </div>
-
-      {/* Charts */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '20px',
-          marginBottom: '24px',
-        }}
-      >
-        {top15.length > 0 && (
-          <div style={cardStyle}>
-            <h3
-              style={{
-                fontSize: '17px',
-                fontWeight: 600,
-                letterSpacing: '-0.374px',
-                color: '#1d1d1f',
-                margin: '0 0 16px 0',
-              }}
-            >
-              경쟁률 상위 15개
-            </h3>
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={top15} margin={{ top: 5, right: 10, left: 0, bottom: 60 }}>
+        <div style={{ flex: 1, padding: '16px', minHeight: 0 }}>
+          {isLoading ? (
+            <LoadingState />
+          ) : isError || (data?.error) ? (
+            <ErrorState message={data?.error ?? '오류'} />
+          ) : top15.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={top15} margin={{ top: 4, right: 8, left: -16, bottom: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="name" tick={{ fontSize: 9 }} angle={-35} textAnchor="end" interval={0} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(v) => [`${v}:1`, '경쟁률']} />
-                <Bar dataKey="rate" radius={[4, 4, 0, 0]}>
+                <XAxis dataKey="name" tick={{ fontSize: 8, fill: '#7a7a7a' }} angle={-35} textAnchor="end" interval={0} />
+                <YAxis tick={{ fontSize: 10, fill: '#7a7a7a' }} />
+                <Tooltip
+                  formatter={(v) => [`${v}:1`, '경쟁률']}
+                  contentStyle={{ fontSize: '11px', border: '1px solid #e0e0e0', borderRadius: '8px' }}
+                />
+                <Bar dataKey="rate" radius={[3, 3, 0, 0]}>
                   {top15.map((_, i) => (
-                    <Cell key={i} fill={topBarColor(i)} />
+                    <Cell key={i} fill={MONO_SHADES[i % MONO_SHADES.length]} />
                   ))}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-          </div>
-        )}
+          )}
+        </div>
+      </div>
 
-        {regionChart.length > 0 && (
-          <div style={cardStyle}>
-            <h3
-              style={{
-                fontSize: '17px',
-                fontWeight: 600,
-                letterSpacing: '-0.374px',
-                color: '#1d1d1f',
-                margin: '0 0 16px 0',
-              }}
-            >
-              지역별 평균 경쟁률
-            </h3>
-            <ResponsiveContainer width="100%" height={280}>
+      {/* Panel 2: Regional average horizontal bar */}
+      <div style={panelStyle}>
+        <div style={panelHeaderStyle}>
+          <h3 style={panelTitleStyle}>지역별 평균 경쟁률</h3>
+        </div>
+        <div style={{ flex: 1, padding: '16px', minHeight: 0 }}>
+          {isLoading ? (
+            <LoadingState />
+          ) : regionChart.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={regionChart}
                 layout="vertical"
-                margin={{ top: 5, right: 30, left: 30, bottom: 5 }}
+                margin={{ top: 4, right: 24, left: 24, bottom: 4 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
-                <XAxis type="number" tick={{ fontSize: 11 }} />
-                <YAxis dataKey="name" type="category" tick={{ fontSize: 10 }} width={55} />
-                <Tooltip formatter={(v) => [`${v}:1`, '평균 경쟁률']} />
-                <Bar dataKey="rate" fill="#0066cc" radius={[0, 4, 4, 0]} />
+                <XAxis type="number" tick={{ fontSize: 10, fill: '#7a7a7a' }} />
+                <YAxis dataKey="name" type="category" tick={{ fontSize: 9, fill: '#7a7a7a' }} width={48} />
+                <Tooltip
+                  formatter={(v) => [`${v}:1`, '평균 경쟁률']}
+                  contentStyle={{ fontSize: '11px', border: '1px solid #e0e0e0', borderRadius: '8px' }}
+                />
+                <Bar dataKey="rate" fill="#1d1d1f" radius={[0, 3, 3, 0]} />
               </BarChart>
             </ResponsiveContainer>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* Full Table */}
-      <div
-        style={{
-          backgroundColor: '#ffffff',
-          border: '1px solid #e0e0e0',
-          borderRadius: '18px',
-          overflow: 'hidden',
-        }}
-      >
-        <div
-          style={{
-            padding: '16px 24px',
-            borderBottom: '1px solid #f0f0f0',
-          }}
-        >
-          <h3
-            style={{
-              fontSize: '17px',
-              fontWeight: 600,
-              letterSpacing: '-0.374px',
-              color: '#1d1d1f',
-              margin: 0,
-            }}
-          >
-            전체 경쟁률 현황
-          </h3>
+      {/* Panel 3: Full table */}
+      <div style={panelStyle}>
+        <div style={panelHeaderStyle}>
+          <h3 style={panelTitleStyle}>전체 경쟁률 현황</h3>
         </div>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
-            <thead style={{ backgroundColor: '#f5f5f7' }}>
-              <tr>
-                {['공고번호', '주택형', '지역구분', '신청건수', '경쟁률'].map((h) => (
-                  <th
-                    key={h}
-                    style={{
-                      padding: '12px 16px',
-                      textAlign: 'left',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      letterSpacing: '-0.224px',
-                      color: '#1d1d1f',
-                    }}
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item, idx) => (
-                <tr
-                  key={idx}
-                  style={{ borderTop: '1px solid #f0f0f0' }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLTableRowElement).style.backgroundColor = '#fafafc';
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLTableRowElement).style.backgroundColor = 'transparent';
-                  }}
-                >
-                  <td style={{ padding: '12px 16px', color: '#7a7a7a', fontFamily: 'monospace', fontSize: '12px' }}>
-                    {item.PBLANC_NO}
-                  </td>
-                  <td style={{ padding: '12px 16px', color: '#1d1d1f' }}>{item.HOUSE_TY || '-'}</td>
-                  <td style={{ padding: '12px 16px', color: '#7a7a7a' }}>{item.RESIDE_SENM || '-'}</td>
-                  <td style={{ padding: '12px 16px', color: '#7a7a7a' }}>
-                    {Number(item.REQ_CNT || 0).toLocaleString()}
-                  </td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <span
+        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+          {isLoading ? (
+            <LoadingState />
+          ) : isError || data?.error ? (
+            <ErrorState message={data?.error ?? '오류'} />
+          ) : items.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead style={{ backgroundColor: '#f5f5f7', position: 'sticky', top: 0 }}>
+                <tr>
+                  {['공고번호', '주택형', '지역구분', '신청건수', '경쟁률'].map((h) => (
+                    <th
+                      key={h}
                       style={{
-                        fontWeight: parseFloat(item.CMPET_RATE) > 10 ? 700 : 400,
-                        color: parseFloat(item.CMPET_RATE) > 10 ? '#1d1d1f' : '#0066cc',
+                        padding: '10px 16px',
+                        textAlign: 'left',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        letterSpacing: '-0.1px',
+                        color: '#7a7a7a',
+                        whiteSpace: 'nowrap',
                       }}
                     >
-                      {parseFloat(item.CMPET_RATE).toFixed(1)}:1
-                    </span>
-                  </td>
+                      {h}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {items.map((item, idx) => (
+                  <tr
+                    key={idx}
+                    style={{ borderTop: '1px solid #f0f0f0' }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLTableRowElement).style.backgroundColor = '#fafafc';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLTableRowElement).style.backgroundColor = 'transparent';
+                    }}
+                  >
+                    <td style={{ padding: '10px 16px', color: '#7a7a7a', fontFamily: 'monospace', fontSize: '11px' }}>
+                      {item.PBLANC_NO}
+                    </td>
+                    <td style={{ padding: '10px 16px', color: '#1d1d1f', fontSize: '12px' }}>{item.HOUSE_TY || '-'}</td>
+                    <td style={{ padding: '10px 16px', color: '#7a7a7a', fontSize: '12px' }}>{item.RESIDE_SENM || '-'}</td>
+                    <td style={{ padding: '10px 16px', color: '#7a7a7a', fontSize: '12px' }}>
+                      {Number(item.REQ_CNT || 0).toLocaleString()}
+                    </td>
+                    <td style={{ padding: '10px 16px', fontSize: '12px' }}>
+                      <span
+                        style={{
+                          fontWeight: parseFloat(item.CMPET_RATE) > 10 ? 700 : 400,
+                          color: '#1d1d1f',
+                        }}
+                      >
+                        {parseFloat(item.CMPET_RATE).toFixed(1)}:1
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-function Spinner() {
+function LoadingState() {
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
-      <div
-        className="animate-spin"
-        style={{
-          width: '40px',
-          height: '40px',
-          border: '4px solid #e0e0e0',
-          borderTopColor: '#0066cc',
-          borderRadius: '50%',
-        }}
-      />
-    </div>
-  );
-}
-
-function ErrorBox({ message }: { message: string }) {
-  return (
-    <div
-      style={{
-        backgroundColor: '#ffffff',
-        border: '1px solid #e0e0e0',
-        borderRadius: '18px',
-        padding: '24px',
-        color: '#1d1d1f',
-      }}
-    >
-      <p style={{ fontWeight: 600, margin: 0 }}>오류</p>
-      <p style={{ fontSize: '14px', marginTop: '4px', color: '#7a7a7a' }}>{message}</p>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+      <span style={{ fontSize: '11px', color: '#b0b0b0' }}>로딩 중...</span>
     </div>
   );
 }
 
 function EmptyState() {
   return (
-    <div
-      style={{
-        backgroundColor: '#ffffff',
-        border: '1px solid #e0e0e0',
-        borderRadius: '18px',
-        padding: '40px',
-        textAlign: 'center',
-        color: '#7a7a7a',
-        fontSize: '14px',
-      }}
-    >
-      데이터가 없습니다.
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+      <span style={{ fontSize: '11px', color: '#b0b0b0' }}>데이터가 없습니다.</span>
+    </div>
+  );
+}
+
+function ErrorState({ message }: { message: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+      <span style={{ fontSize: '11px', color: '#7a7a7a' }}>{message}</span>
     </div>
   );
 }

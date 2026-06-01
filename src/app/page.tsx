@@ -1,15 +1,15 @@
 'use client';
 
-import { useState } from 'react';
-import KpiCards from '@/components/KpiCards';
+import { useState, useEffect, useRef } from 'react';
+import KpiSlimBar from '@/components/KpiCards';
 import SaleTab from '@/components/SaleTab';
 import CompetitionTab from '@/components/CompetitionTab';
 import WinnerTab from '@/components/WinnerTab';
 
 const TABS = [
   { id: 'sale', label: '분양공고' },
-  { id: 'competition', label: '경쟁률 현황' },
-  { id: 'winner', label: '당첨자 분석' },
+  { id: 'competition', label: '경쟁률' },
+  { id: 'winner', label: '당첨자' },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
@@ -22,127 +22,177 @@ const REGIONS = [
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabId>('sale');
   const [region, setRegion] = useState('전국');
+  const [regionOpen, setRegionOpen] = useState(false);
+  const regionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!regionOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (regionRef.current && !regionRef.current.contains(e.target as Node)) {
+        setRegionOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [regionOpen]);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#f5f5f7' }}>
-      {/* Global Nav */}
+    <div
+      style={{
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        backgroundColor: '#f5f5f7',
+        overflow: 'hidden',
+      }}
+    >
+      {/* HEADER */}
       <header
         style={{
-          backgroundColor: '#000000',
           height: '44px',
+          backgroundColor: '#000000',
           display: 'flex',
           alignItems: 'center',
-          paddingLeft: '22px',
-          paddingRight: '22px',
+          paddingLeft: '24px',
+          paddingRight: '24px',
+          gap: '24px',
+          flexShrink: 0,
+          position: 'relative',
         }}
       >
-        <div
+        {/* Left: title */}
+        <span
           style={{
-            maxWidth: '980px',
-            width: '100%',
-            margin: '0 auto',
-            display: 'flex',
-            alignItems: 'center',
+            color: '#ffffff',
+            fontSize: '11px',
+            letterSpacing: '0.08em',
+            fontWeight: 500,
+            whiteSpace: 'nowrap',
           }}
         >
-          <span
-            style={{
-              fontSize: '12px',
-              fontWeight: 400,
-              color: 'rgba(255,255,255,0.7)',
-              letterSpacing: '-0.12px',
-            }}
-          >
-            청약
-          </span>
-        </div>
-      </header>
+          청약 대시보드
+        </span>
 
-      <main style={{ maxWidth: '980px', margin: '0 auto', padding: '24px 16px' }}>
-        {/* KPI Cards */}
-        <KpiCards region={region} />
-
-        {/* Region Filter */}
-        <div style={{ marginBottom: '16px' }}>
-          <p
-            style={{
-              fontSize: '14px',
-              fontWeight: 600,
-              color: '#1d1d1f',
-              letterSpacing: '-0.224px',
-              marginBottom: '10px',
-            }}
-          >
-            지역
-          </p>
+        {/* Center: segment control */}
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
           <div
-            className="scrollbar-hide"
             style={{
+              backgroundColor: '#333333',
+              borderRadius: '8px',
+              padding: '2px',
               display: 'flex',
-              gap: '8px',
-              overflowX: 'auto',
-              paddingBottom: '4px',
             }}
           >
-            {REGIONS.map((r) => (
+            {TABS.map((tab) => (
               <button
-                key={r}
-                onClick={() => setRegion(r)}
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
                 style={{
-                  flexShrink: 0,
-                  padding: '8px 14px',
-                  borderRadius: '9999px',
-                  fontSize: '14px',
-                  fontWeight: region === r ? 600 : 400,
-                  color: region === r ? '#ffffff' : '#333333',
-                  backgroundColor: region === r ? '#0066cc' : '#ffffff',
-                  border: region === r ? '2px solid #0066cc' : '1px solid #e0e0e0',
+                  padding: '4px 16px',
+                  fontSize: '11px',
+                  borderRadius: '6px',
+                  border: 'none',
                   cursor: 'pointer',
                   transition: 'all 150ms',
+                  backgroundColor: activeTab === tab.id ? '#ffffff' : 'transparent',
+                  color: activeTab === tab.id ? '#1d1d1f' : '#b0b0b0',
+                  fontWeight: activeTab === tab.id ? 600 : 400,
                 }}
               >
-                {r}
+                {tab.label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Tab Segment Control */}
-        <div
-          style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #e0e0e0',
-            borderRadius: '18px',
-            padding: '4px',
-            display: 'inline-flex',
-            marginBottom: '24px',
-          }}
-        >
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+        {/* Right: region accordion button */}
+        <div ref={regionRef} style={{ position: 'relative' }}>
+          <button
+            onClick={() => setRegionOpen((v) => !v)}
+            style={{
+              backgroundColor: '#333333',
+              color: '#ffffff',
+              fontSize: '11px',
+              padding: '4px 12px',
+              borderRadius: '6px',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {region}
+            <span style={{ fontSize: '9px' }}>{regionOpen ? '▾' : '▸'}</span>
+          </button>
+
+          {/* Dropdown panel */}
+          {regionOpen && (
+            <div
               style={{
-                padding: '8px 20px',
-                borderRadius: activeTab === tab.id ? '11px' : '11px',
-                fontSize: '14px',
-                fontWeight: activeTab === tab.id ? 600 : 400,
-                color: activeTab === tab.id ? '#ffffff' : '#7a7a7a',
-                backgroundColor: activeTab === tab.id ? '#0066cc' : 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'all 150ms',
+                position: 'absolute',
+                top: '36px',
+                right: 0,
+                zIndex: 50,
+                backgroundColor: '#ffffff',
+                border: '1px solid #e0e0e0',
+                borderRadius: '11px',
+                padding: '12px',
+                width: '280px',
+                boxShadow: 'none',
+                outline: '1px solid #e0e0e0',
               }}
             >
-              {tab.label}
-            </button>
-          ))}
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '6px',
+                }}
+              >
+                {REGIONS.map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => {
+                      setRegion(r);
+                      setRegionOpen(false);
+                    }}
+                    style={{
+                      padding: '4px 10px',
+                      fontSize: '11px',
+                      borderRadius: '9999px',
+                      border: region === r ? '1px solid #1d1d1f' : '1px solid #e0e0e0',
+                      backgroundColor: region === r ? '#1d1d1f' : '#ffffff',
+                      color: region === r ? '#ffffff' : '#333333',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
+      </header>
 
-        {/* Tab Content */}
-        {activeTab === 'sale' && <SaleTab region={region} />}
-        {activeTab === 'competition' && <CompetitionTab region={region} />}
-        {activeTab === 'winner' && <WinnerTab region={region} />}
+      {/* KPI SLIM BAR */}
+      <KpiSlimBar region={region} />
+
+      {/* MAIN CONTENT */}
+      <main
+        style={{
+          flex: 1,
+          overflow: 'hidden',
+          padding: '12px',
+        }}
+      >
+        <div style={{ height: '100%' }}>
+          {activeTab === 'sale' && <SaleTab region={region} />}
+          {activeTab === 'competition' && <CompetitionTab region={region} />}
+          {activeTab === 'winner' && <WinnerTab region={region} />}
+        </div>
       </main>
     </div>
   );
