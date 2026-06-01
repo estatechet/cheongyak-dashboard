@@ -27,39 +27,83 @@ export default function KpiCards({ region }: { region: string }) {
       label: '이번달 공고 건수',
       value: isLoading ? '...' : isError ? '-' : `${(data?.saleCount ?? 0).toLocaleString()}건`,
       sub: '분양 공고 총계',
-      color: 'bg-blue-700',
-      textColor: 'text-white',
+      valueColor: '#0066cc',
     },
     {
       label: '최고 경쟁률',
       value: isLoading ? '...' : isError ? '-' : `${(data?.maxRate ?? 0).toFixed(1)}:1`,
       sub: '전국 기준',
-      color: 'bg-red-500',
-      textColor: 'text-white',
+      valueColor: '#1d1d1f',
     },
     {
       label: '평균 경쟁률',
       value: isLoading ? '...' : isError ? '-' : `${(data?.avgRate ?? 0).toFixed(1)}:1`,
       sub: '전체 평균',
-      color: 'bg-indigo-500',
-      textColor: 'text-white',
+      valueColor: '#1d1d1f',
     },
     {
       label: '최다 당첨 연령대',
       value: isLoading ? '...' : isError ? '-' : (data?.topAge ?? '-'),
       sub: '최신 통계 기준',
-      color: 'bg-emerald-500',
-      textColor: 'text-white',
+      valueColor: '#0066cc',
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(2, 1fr)',
+        gap: '20px',
+        marginBottom: '32px',
+      }}
+      className="lg:grid-cols-4-kpi"
+    >
       {cards.map((card) => (
-        <div key={card.label} className={`${card.color} rounded-xl shadow-sm p-5`}>
-          <p className={`text-xs font-medium opacity-80 ${card.textColor}`}>{card.label}</p>
-          <p className={`text-2xl font-bold mt-2 ${card.textColor}`}>{card.value}</p>
-          <p className={`text-xs mt-1 opacity-70 ${card.textColor}`}>{card.sub}</p>
+        <div
+          key={card.label}
+          style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #e0e0e0',
+            borderRadius: '18px',
+            padding: '24px',
+          }}
+        >
+          <p
+            style={{
+              fontSize: '14px',
+              fontWeight: 600,
+              letterSpacing: '-0.224px',
+              color: '#7a7a7a',
+              margin: 0,
+            }}
+          >
+            {card.label}
+          </p>
+          <p
+            style={{
+              fontSize: '34px',
+              fontWeight: 600,
+              letterSpacing: '-0.374px',
+              color: card.valueColor,
+              marginTop: '8px',
+              marginBottom: 0,
+            }}
+          >
+            {card.value}
+          </p>
+          <p
+            style={{
+              fontSize: '12px',
+              fontWeight: 400,
+              letterSpacing: '-0.12px',
+              color: '#7a7a7a',
+              marginTop: '4px',
+              marginBottom: 0,
+            }}
+          >
+            {card.sub}
+          </p>
         </div>
       ))}
     </div>

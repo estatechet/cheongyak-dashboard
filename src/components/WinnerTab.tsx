@@ -45,14 +45,21 @@ interface ApiResponse {
   error?: string;
 }
 
-const PIE_COLORS = ['#1d4ed8', '#7c3aed', '#db2777', '#d97706', '#059669', '#0891b2'];
+// Apple-aligned palette: primary, on-dark, indigo, muted
+const PIE_COLORS = ['#0066cc', '#2997ff', '#6366f1', '#7a7a7a'];
 
 async function fetchWinner(): Promise<ApiResponse> {
   return fetch('/api/subscription?type=winner').then((r) => r.json());
 }
 
+const cardStyle: React.CSSProperties = {
+  backgroundColor: '#ffffff',
+  border: '1px solid #e0e0e0',
+  borderRadius: '18px',
+  padding: '24px',
+};
+
 export default function WinnerTab({ region }: { region: string }) {
-  // region prop kept for future use; currently winner API doesn't support region filter
   void region;
 
   const { data, isLoading, isError } = useQuery({
@@ -67,7 +74,6 @@ export default function WinnerTab({ region }: { region: string }) {
   const areaItems = data?.areaData?.data ?? [];
   const cmpetAreaItems = data?.cmpetAreaData?.data ?? [];
 
-  // Age chart - use latest entry
   const latest = ageItems[ageItems.length - 1];
   const ageChartData = latest
     ? [
@@ -78,7 +84,6 @@ export default function WinnerTab({ region }: { region: string }) {
       ].filter((d) => d.value > 0)
     : [];
 
-  // Area winner chart - aggregate by region
   const areaMap = new Map<string, number>();
   areaItems.forEach((i) => {
     const key = i.AREA_NM || '기타';
@@ -89,7 +94,6 @@ export default function WinnerTab({ region }: { region: string }) {
     .sort((a, b) => b.value - a.value)
     .slice(0, 12);
 
-  // Regional competition rate chart
   const cmpetMap = new Map<string, { total: number; count: number }>();
   cmpetAreaItems.forEach((i) => {
     const key = i.AREA_NM || '기타';
@@ -107,21 +111,53 @@ export default function WinnerTab({ region }: { region: string }) {
   return (
     <div>
       {/* Summary cards */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="bg-white rounded-xl shadow-sm p-4">
-          <p className="text-xs text-gray-500">연령 통계 기준일</p>
-          <p className="text-lg font-bold text-blue-700 mt-1">{latest?.STAT_DE || '-'}</p>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: '20px',
+          marginBottom: '24px',
+        }}
+      >
+        <div style={cardStyle}>
+          <p style={{ fontSize: '14px', fontWeight: 600, letterSpacing: '-0.224px', color: '#7a7a7a', margin: 0 }}>
+            연령 통계 기준일
+          </p>
+          <p style={{ fontSize: '34px', fontWeight: 600, letterSpacing: '-0.374px', color: '#0066cc', margin: '8px 0 0 0' }}>
+            {latest?.STAT_DE || '-'}
+          </p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm p-4">
-          <p className="text-xs text-gray-500">지역 데이터 건수</p>
-          <p className="text-lg font-bold text-gray-700 mt-1">{areaItems.length}건</p>
+        <div style={cardStyle}>
+          <p style={{ fontSize: '14px', fontWeight: 600, letterSpacing: '-0.224px', color: '#7a7a7a', margin: 0 }}>
+            지역 데이터 건수
+          </p>
+          <p style={{ fontSize: '34px', fontWeight: 600, letterSpacing: '-0.374px', color: '#7a7a7a', margin: '8px 0 0 0' }}>
+            {areaItems.length}건
+          </p>
         </div>
       </div>
 
       {/* Charts row 1: Pie + Area bar */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="bg-white rounded-xl shadow-sm p-5">
-          <h3 className="font-bold text-gray-800 mb-4 text-sm">연령대별 당첨자 분포</h3>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '20px',
+          marginBottom: '24px',
+        }}
+      >
+        <div style={cardStyle}>
+          <h3
+            style={{
+              fontSize: '17px',
+              fontWeight: 600,
+              letterSpacing: '-0.374px',
+              color: '#1d1d1f',
+              margin: '0 0 16px 0',
+            }}
+          >
+            연령대별 당첨자 분포
+          </h3>
           {ageChartData.length > 0 ? (
             <ResponsiveContainer width="100%" height={260}>
               <PieChart>
@@ -146,12 +182,22 @@ export default function WinnerTab({ region }: { region: string }) {
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-gray-400 text-sm py-10 text-center">데이터 없음</p>
+            <p style={{ color: '#7a7a7a', fontSize: '14px', textAlign: 'center', padding: '40px 0' }}>데이터 없음</p>
           )}
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-5">
-          <h3 className="font-bold text-gray-800 mb-4 text-sm">지역별 당첨자 수</h3>
+        <div style={cardStyle}>
+          <h3
+            style={{
+              fontSize: '17px',
+              fontWeight: 600,
+              letterSpacing: '-0.374px',
+              color: '#1d1d1f',
+              margin: '0 0 16px 0',
+            }}
+          >
+            지역별 당첨자 수
+          </h3>
           {areaChart.length > 0 ? (
             <ResponsiveContainer width="100%" height={260}>
               <BarChart
@@ -163,44 +209,87 @@ export default function WinnerTab({ region }: { region: string }) {
                 <XAxis type="number" tick={{ fontSize: 10 }} />
                 <YAxis dataKey="name" type="category" tick={{ fontSize: 10 }} width={50} />
                 <Tooltip formatter={(v) => [Number(v).toLocaleString() + '명', '당첨자']} />
-                <Bar dataKey="value" fill="#1d4ed8" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="value" fill="#0066cc" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-gray-400 text-sm py-10 text-center">데이터 없음</p>
+            <p style={{ color: '#7a7a7a', fontSize: '14px', textAlign: 'center', padding: '40px 0' }}>데이터 없음</p>
           )}
         </div>
       </div>
 
       {/* Charts row 2: regional competition rate */}
       {cmpetChart.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm p-5 mb-6">
-          <h3 className="font-bold text-gray-800 mb-4 text-sm">지역별 평균 경쟁률</h3>
+        <div style={{ ...cardStyle, marginBottom: '24px' }}>
+          <h3
+            style={{
+              fontSize: '17px',
+              fontWeight: 600,
+              letterSpacing: '-0.374px',
+              color: '#1d1d1f',
+              margin: '0 0 16px 0',
+            }}
+          >
+            지역별 평균 경쟁률
+          </h3>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={cmpetChart} margin={{ top: 5, right: 20, left: 0, bottom: 50 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-35} textAnchor="end" interval={0} />
               <YAxis tick={{ fontSize: 11 }} />
               <Tooltip formatter={(v) => [`${v}:1`, '평균 경쟁률']} />
-              <Bar dataKey="rate" fill="#7c3aed" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="rate" fill="#0066cc" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
       )}
 
       {/* Tables */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '20px',
+        }}
+      >
         {/* Age table */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="px-5 py-3 border-b border-gray-100">
-            <h3 className="font-bold text-gray-800 text-sm">연령별 당첨자 통계</h3>
+        <div
+          style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #e0e0e0',
+            borderRadius: '18px',
+            overflow: 'hidden',
+          }}
+        >
+          <div style={{ padding: '16px 24px', borderBottom: '1px solid #f0f0f0' }}>
+            <h3
+              style={{
+                fontSize: '17px',
+                fontWeight: 600,
+                letterSpacing: '-0.374px',
+                color: '#1d1d1f',
+                margin: 0,
+              }}
+            >
+              연령별 당첨자 통계
+            </h3>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50">
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+              <thead style={{ backgroundColor: '#f5f5f7' }}>
                 <tr>
                   {['기준일', '30대', '40대', '50대', '60대+'].map((h) => (
-                    <th key={h} className="px-3 py-3 text-left text-xs font-semibold text-gray-600">
+                    <th
+                      key={h}
+                      style={{
+                        padding: '12px',
+                        textAlign: 'left',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        letterSpacing: '-0.224px',
+                        color: '#1d1d1f',
+                      }}
+                    >
                       {h}
                     </th>
                   ))}
@@ -208,12 +297,21 @@ export default function WinnerTab({ region }: { region: string }) {
               </thead>
               <tbody>
                 {ageItems.map((item, idx) => (
-                  <tr key={idx} className="border-t border-gray-100 hover:bg-gray-50">
-                    <td className="px-3 py-2.5 text-gray-600 text-xs">{item.STAT_DE}</td>
-                    <td className="px-3 py-2.5 font-semibold text-blue-700">{Number(item.AGE_30).toLocaleString()}</td>
-                    <td className="px-3 py-2.5 font-semibold text-blue-700">{Number(item.AGE_40).toLocaleString()}</td>
-                    <td className="px-3 py-2.5 font-semibold text-blue-700">{Number(item.AGE_50).toLocaleString()}</td>
-                    <td className="px-3 py-2.5 font-semibold text-blue-700">{Number(item.AGE_60).toLocaleString()}</td>
+                  <tr
+                    key={idx}
+                    style={{ borderTop: '1px solid #f0f0f0' }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLTableRowElement).style.backgroundColor = '#fafafc';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLTableRowElement).style.backgroundColor = 'transparent';
+                    }}
+                  >
+                    <td style={{ padding: '10px 12px', color: '#7a7a7a', fontSize: '12px' }}>{item.STAT_DE}</td>
+                    <td style={{ padding: '10px 12px', fontWeight: 600, color: '#0066cc' }}>{Number(item.AGE_30).toLocaleString()}</td>
+                    <td style={{ padding: '10px 12px', fontWeight: 600, color: '#0066cc' }}>{Number(item.AGE_40).toLocaleString()}</td>
+                    <td style={{ padding: '10px 12px', fontWeight: 600, color: '#0066cc' }}>{Number(item.AGE_50).toLocaleString()}</td>
+                    <td style={{ padding: '10px 12px', fontWeight: 600, color: '#0066cc' }}>{Number(item.AGE_60).toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>
@@ -222,16 +320,43 @@ export default function WinnerTab({ region }: { region: string }) {
         </div>
 
         {/* Area table */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="px-5 py-3 border-b border-gray-100">
-            <h3 className="font-bold text-gray-800 text-sm">지역별 당첨자 통계</h3>
+        <div
+          style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #e0e0e0',
+            borderRadius: '18px',
+            overflow: 'hidden',
+          }}
+        >
+          <div style={{ padding: '16px 24px', borderBottom: '1px solid #f0f0f0' }}>
+            <h3
+              style={{
+                fontSize: '17px',
+                fontWeight: 600,
+                letterSpacing: '-0.374px',
+                color: '#1d1d1f',
+                margin: 0,
+              }}
+            >
+              지역별 당첨자 통계
+            </h3>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50">
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+              <thead style={{ backgroundColor: '#f5f5f7' }}>
                 <tr>
                   {['기준일', '지역명', '신청건수', '당첨자수', '경쟁률'].map((h) => (
-                    <th key={h} className="px-3 py-3 text-left text-xs font-semibold text-gray-600">
+                    <th
+                      key={h}
+                      style={{
+                        padding: '12px',
+                        textAlign: 'left',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        letterSpacing: '-0.224px',
+                        color: '#1d1d1f',
+                      }}
+                    >
                       {h}
                     </th>
                   ))}
@@ -239,12 +364,21 @@ export default function WinnerTab({ region }: { region: string }) {
               </thead>
               <tbody>
                 {areaItems.slice(0, 20).map((item, idx) => (
-                  <tr key={idx} className="border-t border-gray-100 hover:bg-gray-50">
-                    <td className="px-3 py-2.5 text-gray-500 text-xs">{item.STAT_DE}</td>
-                    <td className="px-3 py-2.5 font-medium text-gray-800">{item.AREA_NM}</td>
-                    <td className="px-3 py-2.5 text-gray-600">{Number(item.APPLY_CNT || 0).toLocaleString()}</td>
-                    <td className="px-3 py-2.5 font-semibold text-blue-700">{Number(item.PRZWNER_CNT || 0).toLocaleString()}</td>
-                    <td className="px-3 py-2.5 font-bold text-purple-700">{parseFloat(item.CMPET_RT || '0').toFixed(1)}:1</td>
+                  <tr
+                    key={idx}
+                    style={{ borderTop: '1px solid #f0f0f0' }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLTableRowElement).style.backgroundColor = '#fafafc';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLTableRowElement).style.backgroundColor = 'transparent';
+                    }}
+                  >
+                    <td style={{ padding: '10px 12px', color: '#7a7a7a', fontSize: '12px' }}>{item.STAT_DE}</td>
+                    <td style={{ padding: '10px 12px', fontWeight: 600, color: '#1d1d1f' }}>{item.AREA_NM}</td>
+                    <td style={{ padding: '10px 12px', color: '#7a7a7a' }}>{Number(item.APPLY_CNT || 0).toLocaleString()}</td>
+                    <td style={{ padding: '10px 12px', fontWeight: 600, color: '#0066cc' }}>{Number(item.PRZWNER_CNT || 0).toLocaleString()}</td>
+                    <td style={{ padding: '10px 12px', fontWeight: 600, color: '#6366f1' }}>{parseFloat(item.CMPET_RT || '0').toFixed(1)}:1</td>
                   </tr>
                 ))}
               </tbody>
@@ -258,17 +392,34 @@ export default function WinnerTab({ region }: { region: string }) {
 
 function Spinner() {
   return (
-    <div className="flex justify-center py-20">
-      <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-700 border-t-transparent" />
+    <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
+      <div
+        className="animate-spin"
+        style={{
+          width: '40px',
+          height: '40px',
+          border: '4px solid #e0e0e0',
+          borderTopColor: '#0066cc',
+          borderRadius: '50%',
+        }}
+      />
     </div>
   );
 }
 
 function ErrorBox({ message }: { message: string }) {
   return (
-    <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-red-700">
-      <p className="font-semibold">오류</p>
-      <p className="text-sm mt-1">{message}</p>
+    <div
+      style={{
+        backgroundColor: '#ffffff',
+        border: '1px solid #e0e0e0',
+        borderRadius: '18px',
+        padding: '24px',
+        color: '#1d1d1f',
+      }}
+    >
+      <p style={{ fontWeight: 600, margin: 0 }}>오류</p>
+      <p style={{ fontSize: '14px', marginTop: '4px', color: '#7a7a7a' }}>{message}</p>
     </div>
   );
 }

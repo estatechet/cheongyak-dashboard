@@ -24,53 +24,122 @@ export default function Home() {
   const [region, setRegion] = useState('전국');
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-blue-700 text-white py-6 px-4 shadow-lg">
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-2xl font-bold">청약 대시보드</h1>
-          <p className="text-blue-200 text-sm mt-1">공공데이터포털 청약홈 API 기반 실시간 현황</p>
+    <div className="min-h-screen" style={{ backgroundColor: '#f5f5f7' }}>
+      {/* Global Nav */}
+      <header
+        style={{
+          backgroundColor: '#000000',
+          height: '44px',
+          display: 'flex',
+          alignItems: 'center',
+          paddingLeft: '22px',
+          paddingRight: '22px',
+        }}
+      >
+        <div
+          style={{
+            maxWidth: '980px',
+            width: '100%',
+            margin: '0 auto',
+            display: 'flex',
+            alignItems: 'center',
+          }}
+        >
+          <span
+            style={{
+              fontSize: '12px',
+              fontWeight: 400,
+              color: 'rgba(255,255,255,0.7)',
+              letterSpacing: '-0.12px',
+            }}
+          >
+            청약
+          </span>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-6">
+      <main style={{ maxWidth: '980px', margin: '0 auto', padding: '24px 16px' }}>
         {/* KPI Cards */}
         <KpiCards region={region} />
 
         {/* Region Filter */}
-        <div className="bg-white rounded-xl shadow-sm p-4 mb-6 flex flex-wrap gap-2 items-center">
-          <span className="text-sm font-medium text-gray-600 mr-2">지역 필터:</span>
-          {REGIONS.map((r) => (
-            <button
-              key={r}
-              onClick={() => setRegion(r)}
-              className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                region === r
-                  ? 'bg-blue-700 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-700'
-              }`}
-            >
-              {r}
-            </button>
-          ))}
+        <div style={{ marginBottom: '16px' }}>
+          <p
+            style={{
+              fontSize: '14px',
+              fontWeight: 600,
+              color: '#1d1d1f',
+              letterSpacing: '-0.224px',
+              marginBottom: '10px',
+            }}
+          >
+            지역
+          </p>
+          <div
+            className="scrollbar-hide"
+            style={{
+              display: 'flex',
+              gap: '8px',
+              overflowX: 'auto',
+              paddingBottom: '4px',
+            }}
+          >
+            {REGIONS.map((r) => (
+              <button
+                key={r}
+                onClick={() => setRegion(r)}
+                style={{
+                  flexShrink: 0,
+                  padding: '8px 14px',
+                  borderRadius: '9999px',
+                  fontSize: '14px',
+                  fontWeight: region === r ? 600 : 400,
+                  color: region === r ? '#ffffff' : '#333333',
+                  backgroundColor: region === r ? '#0066cc' : '#ffffff',
+                  border: region === r ? '2px solid #0066cc' : '1px solid #e0e0e0',
+                  cursor: 'pointer',
+                  transition: 'all 150ms',
+                }}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-gray-200 mb-6">
+        {/* Tab Segment Control */}
+        <div
+          style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #e0e0e0',
+            borderRadius: '18px',
+            padding: '4px',
+            display: 'inline-flex',
+            marginBottom: '24px',
+          }}
+        >
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-6 py-3 text-sm font-semibold transition-colors border-b-2 -mb-px ${
-                activeTab === tab.id
-                  ? 'border-blue-700 text-blue-700'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
+              style={{
+                padding: '8px 20px',
+                borderRadius: activeTab === tab.id ? '11px' : '11px',
+                fontSize: '14px',
+                fontWeight: activeTab === tab.id ? 600 : 400,
+                color: activeTab === tab.id ? '#ffffff' : '#7a7a7a',
+                backgroundColor: activeTab === tab.id ? '#0066cc' : 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 150ms',
+              }}
             >
               {tab.label}
             </button>
           ))}
         </div>
 
+        {/* Tab Content */}
         {activeTab === 'sale' && <SaleTab region={region} />}
         {activeTab === 'competition' && <CompetitionTab region={region} />}
         {activeTab === 'winner' && <WinnerTab region={region} />}

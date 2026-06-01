@@ -34,7 +34,8 @@ interface ApiResponse {
   error?: string;
 }
 
-const CHART_COLORS = ['#1d4ed8', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe'];
+// Gradient blues using primary #0066cc
+const CHART_COLORS = ['#0066cc', '#2980d9', '#4d97e0', '#66a8e5', '#80b9ea', '#99caef'];
 
 async function fetchSale(region: string, page: number): Promise<ApiResponse> {
   const params = new URLSearchParams({ type: 'sale', page: String(page) });
@@ -48,10 +49,16 @@ async function fetchSaleChart(region: string): Promise<ApiResponse> {
   return fetch(`/api/subscription?${params}`).then((r) => r.json());
 }
 
+const cardStyle: React.CSSProperties = {
+  backgroundColor: '#ffffff',
+  border: '1px solid #e0e0e0',
+  borderRadius: '18px',
+  padding: '24px',
+};
+
 export default function SaleTab({ region }: { region: string }) {
   const [page, setPage] = useState(1);
 
-  // Reset page when region changes
   useEffect(() => {
     setPage(1);
   }, [region]);
@@ -74,7 +81,6 @@ export default function SaleTab({ region }: { region: string }) {
   const total = listData?.totalCount ?? 0;
   const totalPages = Math.ceil(total / 20);
 
-  // Build region count chart
   const regionMap = new Map<string, number>();
   (chartData?.data ?? []).forEach((item) => {
     const r = item.SUBSCRPT_AREA_CODE_NM || '기타';
@@ -85,7 +91,6 @@ export default function SaleTab({ region }: { region: string }) {
     .sort((a, b) => b.count - a.count)
     .slice(0, 12);
 
-  // Build supply distribution buckets
   const supplyBuckets: Record<string, number> = {
     '~100': 0,
     '101~300': 0,
@@ -105,42 +110,86 @@ export default function SaleTab({ region }: { region: string }) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold text-gray-800">APT 분양공고</h2>
-        <span className="text-sm text-gray-500">총 {total.toLocaleString()}건</span>
+      {/* Section header */}
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '16px' }}>
+        <h2
+          style={{
+            fontSize: '21px',
+            fontWeight: 600,
+            letterSpacing: '0.231px',
+            color: '#1d1d1f',
+            margin: 0,
+          }}
+        >
+          분양 공고
+        </h2>
+        <span style={{ fontSize: '14px', fontWeight: 400, color: '#7a7a7a' }}>
+          총 {total.toLocaleString()}건
+        </span>
       </div>
 
       {/* Charts */}
       {!chartLoading && regionChartData.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-          <div className="bg-white rounded-xl shadow-sm p-5">
-            <h3 className="font-bold text-gray-800 mb-4 text-sm">지역별 공고 수</h3>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={regionChartData} margin={{ top: 5, right: 10, left: 0, bottom: 50 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-35} textAnchor="end" interval={0} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(v) => [`${v}건`, '공고 수']} />
-                <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                  {regionChartData.map((_, i) => (
-                    <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr',
+            gap: '20px',
+            marginBottom: '24px',
+          }}
+          className="lg:grid-cols-2-charts"
+        >
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+            <div style={cardStyle}>
+              <h3
+                style={{
+                  fontSize: '17px',
+                  fontWeight: 600,
+                  letterSpacing: '-0.374px',
+                  color: '#1d1d1f',
+                  marginBottom: '16px',
+                  margin: '0 0 16px 0',
+                }}
+              >
+                지역별 공고 수
+              </h3>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={regionChartData} margin={{ top: 5, right: 10, left: 0, bottom: 50 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-35} textAnchor="end" interval={0} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip formatter={(v) => [`${v}건`, '공고 수']} />
+                  <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                    {regionChartData.map((_, i) => (
+                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
 
-          <div className="bg-white rounded-xl shadow-sm p-5">
-            <h3 className="font-bold text-gray-800 mb-4 text-sm">공급세대 규모 분포</h3>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={supplyChartData} margin={{ top: 5, right: 10, left: 0, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(v) => [`${v}건`, '단지 수']} />
-                <Bar dataKey="count" fill="#6366f1" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <div style={cardStyle}>
+              <h3
+                style={{
+                  fontSize: '17px',
+                  fontWeight: 600,
+                  letterSpacing: '-0.374px',
+                  color: '#1d1d1f',
+                  margin: '0 0 16px 0',
+                }}
+              >
+                공급세대 규모 분포
+              </h3>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={supplyChartData} margin={{ top: 5, right: 10, left: 0, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip formatter={(v) => [`${v}건`, '단지 수']} />
+                  <Bar dataKey="count" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
       )}
@@ -154,22 +203,64 @@ export default function SaleTab({ region }: { region: string }) {
         <EmptyState />
       ) : (
         <>
-          <div className="grid gap-4">
+          <div style={{ display: 'grid', gap: '16px' }}>
             {items.map((item, idx) => (
-              <div
-                key={idx}
-                className="bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-start justify-between flex-wrap gap-2">
+              <div key={idx} style={cardStyle}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '8px',
+                  }}
+                >
                   <div>
-                    <h3 className="font-bold text-gray-900">{item.HOUSE_NM}</h3>
-                    <p className="text-sm text-gray-500 mt-0.5">{item.HSSPLY_ADRES}</p>
+                    <h3
+                      style={{
+                        fontSize: '17px',
+                        fontWeight: 600,
+                        letterSpacing: '-0.374px',
+                        color: '#1d1d1f',
+                        margin: 0,
+                      }}
+                    >
+                      {item.HOUSE_NM}
+                    </h3>
+                    <p
+                      style={{
+                        fontSize: '14px',
+                        fontWeight: 400,
+                        letterSpacing: '-0.224px',
+                        color: '#7a7a7a',
+                        margin: '4px 0 0 0',
+                      }}
+                    >
+                      {item.HSSPLY_ADRES}
+                    </p>
                   </div>
-                  <span className="bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+                  <span
+                    style={{
+                      backgroundColor: '#f5f5f7',
+                      color: '#0066cc',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      borderRadius: '9999px',
+                      padding: '4px 12px',
+                    }}
+                  >
                     {item.SUBSCRPT_AREA_CODE_NM}
                   </span>
                 </div>
-                <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gap: '12px',
+                    marginTop: '16px',
+                  }}
+                  className="sm:grid-cols-3-info"
+                >
                   <InfoCell
                     label="총 공급세대"
                     value={`${Number(item.TOT_SUPLY_HSHLDCO || 0).toLocaleString()}세대`}
@@ -189,21 +280,51 @@ export default function SaleTab({ region }: { region: string }) {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex justify-center items-center gap-2 mt-6">
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '12px',
+                marginTop: '24px',
+              }}
+            >
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-white shadow-sm border border-gray-200 disabled:opacity-40 hover:bg-gray-50"
+                style={{
+                  backgroundColor: '#1d1d1f',
+                  color: '#ffffff',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  fontWeight: 400,
+                  border: 'none',
+                  cursor: page === 1 ? 'not-allowed' : 'pointer',
+                  opacity: page === 1 ? 0.4 : 1,
+                  transition: 'all 150ms',
+                }}
               >
                 이전
               </button>
-              <span className="text-sm text-gray-600">
+              <span style={{ fontSize: '14px', color: '#7a7a7a' }}>
                 {page} / {totalPages}
               </span>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-white shadow-sm border border-gray-200 disabled:opacity-40 hover:bg-gray-50"
+                style={{
+                  backgroundColor: '#1d1d1f',
+                  color: '#ffffff',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  fontWeight: 400,
+                  border: 'none',
+                  cursor: page === totalPages ? 'not-allowed' : 'pointer',
+                  opacity: page === totalPages ? 0.4 : 1,
+                  transition: 'all 150ms',
+                }}
               >
                 다음
               </button>
@@ -217,9 +338,25 @@ export default function SaleTab({ region }: { region: string }) {
 
 function InfoCell({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-gray-50 rounded-lg p-3">
-      <p className="text-xs text-gray-500">{label}</p>
-      <p className="text-sm font-semibold text-gray-800 mt-0.5">{value || '-'}</p>
+    <div
+      style={{
+        backgroundColor: '#f5f5f7',
+        borderRadius: '11px',
+        padding: '12px',
+      }}
+    >
+      <p style={{ fontSize: '12px', color: '#7a7a7a', margin: 0 }}>{label}</p>
+      <p
+        style={{
+          fontSize: '14px',
+          fontWeight: 600,
+          letterSpacing: '-0.224px',
+          color: '#1d1d1f',
+          margin: '4px 0 0 0',
+        }}
+      >
+        {value || '-'}
+      </p>
     </div>
   );
 }
@@ -231,23 +368,53 @@ function fmt(d: string) {
 
 function Spinner() {
   return (
-    <div className="flex justify-center py-20">
-      <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-700 border-t-transparent" />
+    <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
+      <div
+        style={{
+          width: '40px',
+          height: '40px',
+          border: '4px solid #e0e0e0',
+          borderTopColor: '#0066cc',
+          borderRadius: '50%',
+          animation: 'spin 0.8s linear infinite',
+        }}
+        className="animate-spin"
+      />
     </div>
   );
 }
 
 function ErrorBox({ message }: { message: string }) {
   return (
-    <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-red-700">
-      <p className="font-semibold">오류</p>
-      <p className="text-sm mt-1">{message}</p>
+    <div
+      style={{
+        backgroundColor: '#fff5f5',
+        border: '1px solid #e0e0e0',
+        borderRadius: '18px',
+        padding: '24px',
+        color: '#1d1d1f',
+      }}
+    >
+      <p style={{ fontWeight: 600, margin: 0 }}>오류</p>
+      <p style={{ fontSize: '14px', marginTop: '4px', color: '#7a7a7a' }}>{message}</p>
     </div>
   );
 }
 
 function EmptyState() {
   return (
-    <div className="bg-white rounded-xl p-10 text-center text-gray-400">데이터가 없습니다.</div>
+    <div
+      style={{
+        backgroundColor: '#ffffff',
+        border: '1px solid #e0e0e0',
+        borderRadius: '18px',
+        padding: '40px',
+        textAlign: 'center',
+        color: '#7a7a7a',
+        fontSize: '14px',
+      }}
+    >
+      데이터가 없습니다.
+    </div>
   );
 }
