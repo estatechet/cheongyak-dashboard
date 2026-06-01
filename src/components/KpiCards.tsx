@@ -33,7 +33,7 @@ export default function KpiSlimBar({ region }: { region: string }) {
   return (
     <div
       style={{
-        height: '36px',
+        height: '52px',
         backgroundColor: '#ffffff',
         borderBottom: '1px solid #e0e0e0',
         display: 'flex',
@@ -57,14 +57,15 @@ export default function KpiSlimBar({ region }: { region: string }) {
 
 function KpiItem({ label, value, loading }: { label: string; value: string; loading: boolean }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
-      <span style={{ fontSize: '11px', color: '#7a7a7a' }}>{label}</span>
+    <div style={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
+      <span style={{ fontSize: '12px', color: '#7a7a7a' }}>{label}</span>
       <span
         style={{
-          fontSize: '11px',
-          fontWeight: 600,
+          fontSize: '17px',
+          fontWeight: 700,
           color: loading ? '#b0b0b0' : '#1d1d1f',
-          marginLeft: '6px',
+          marginLeft: '8px',
+          letterSpacing: '-0.5px',
         }}
       >
         {value}
@@ -78,9 +79,9 @@ function Divider() {
     <span
       style={{
         color: '#e0e0e0',
-        marginLeft: '24px',
-        marginRight: '24px',
-        fontSize: '11px',
+        marginLeft: '28px',
+        marginRight: '28px',
+        fontSize: '13px',
         userSelect: 'none',
       }}
     >

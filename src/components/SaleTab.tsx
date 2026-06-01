@@ -78,9 +78,11 @@ const panelTitleStyle: React.CSSProperties = {
 
 export default function SaleTab({ region }: { region: string }) {
   const [page, setPage] = useState(1);
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
 
   useEffect(() => {
     setPage(1);
+    setExpandedIdx(null);
   }, [region]);
 
   const {
@@ -231,43 +233,90 @@ export default function SaleTab({ region }: { region: string }) {
             <EmptyState />
           ) : (
             <>
-              {items.map((item, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    paddingTop: '12px',
-                    paddingBottom: '12px',
-                    borderBottom: idx < items.length - 1 ? '1px solid #f0f0f0' : 'none',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span
+              {items.map((item, idx) => {
+                const isExpanded = expandedIdx === idx;
+                return (
+                  <div
+                    key={idx}
+                    style={{
+                      borderBottom: idx < items.length - 1 ? '1px solid #f0f0f0' : 'none',
+                    }}
+                  >
+                    <div
+                      onClick={() => setExpandedIdx(isExpanded ? null : idx)}
                       style={{
-                        fontSize: '13px',
-                        fontWeight: 600,
-                        color: '#1d1d1f',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        marginRight: '12px',
-                        flex: 1,
+                        paddingTop: '12px',
+                        paddingBottom: '12px',
+                        cursor: 'pointer',
                       }}
                     >
-                      {item.HOUSE_NM}
-                    </span>
-                    <span style={{ fontSize: '11px', color: '#7a7a7a', flexShrink: 0 }}>
-                      {item.SUBSCRPT_AREA_CODE_NM}
-                    </span>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span
+                          style={{
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            color: '#1d1d1f',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            marginRight: '10px',
+                            flex: 1,
+                          }}
+                        >
+                          {item.HOUSE_NM}
+                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                          <span style={{ fontSize: '11px', color: '#7a7a7a' }}>
+                            {item.SUBSCRPT_AREA_CODE_NM}
+                          </span>
+                          <span style={{ fontSize: '9px', color: '#b0b0b0' }}>{isExpanded ? '▾' : '▸'}</span>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '12px', marginTop: '5px' }}>
+                        <span style={{ fontSize: '11px', color: '#7a7a7a' }}>
+                          {Number(item.TOT_SUPLY_HSHLDCO || 0).toLocaleString()}세대
+                        </span>
+                        <span style={{ fontSize: '11px', color: '#7a7a7a' }}>공고 {fmt(item.RCRIT_PBLANC_DE)}</span>
+                        <span style={{ fontSize: '11px', color: '#7a7a7a' }}>1순위 {fmt(item.GNRL_RNK1_CRSPAREA_RCPTDE)}</span>
+                      </div>
+                    </div>
+
+                    {isExpanded && (
+                      <div
+                        style={{
+                          backgroundColor: '#f5f5f7',
+                          borderRadius: '10px',
+                          padding: '12px 14px',
+                          marginBottom: '12px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '5px',
+                        }}
+                      >
+                        {item.HSSPLY_ADRES && (
+                          <DetailRow label="주소" value={item.HSSPLY_ADRES} />
+                        )}
+                        {item.BSNS_MBY_NM && (
+                          <DetailRow label="사업주체" value={item.BSNS_MBY_NM} />
+                        )}
+                        {item.CNSTRCT_ENTRPS_NM && (
+                          <DetailRow label="시공사" value={item.CNSTRCT_ENTRPS_NM} />
+                        )}
+                        {item.SPSPLY_RCEPT_BGNDE && (
+                          <DetailRow
+                            label="특별공급"
+                            value={`${fmt(item.SPSPLY_RCEPT_BGNDE)} ~ ${fmt(item.SPSPLY_RCEPT_ENDDE)}`}
+                          />
+                        )}
+                        <DetailRow
+                          label="1순위"
+                          value={`${fmt(item.GNRL_RNK1_CRSPAREA_RCPTDE)} ~ ${fmt(item.GNRL_RNK1_CRSPAREA_ENDDE)}`}
+                        />
+                      </div>
+                    )}
                   </div>
-                  <div style={{ display: 'flex', gap: '12px', marginTop: '6px' }}>
-                    <span style={{ fontSize: '11px', color: '#7a7a7a' }}>
-                      {Number(item.TOT_SUPLY_HSHLDCO || 0).toLocaleString()}세대
-                    </span>
-                    <span style={{ fontSize: '11px', color: '#7a7a7a' }}>공고 {fmt(item.RCRIT_PBLANC_DE)}</span>
-                    <span style={{ fontSize: '11px', color: '#7a7a7a' }}>1순위 {fmt(item.GNRL_RNK1_CRSPAREA_RCPTDE)}</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
 
               {totalPages > 1 && (
                 <div
@@ -280,7 +329,7 @@ export default function SaleTab({ region }: { region: string }) {
                   }}
                 >
                   <button
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    onClick={() => { setPage((p) => Math.max(1, p - 1)); setExpandedIdx(null); }}
                     disabled={page === 1}
                     style={{
                       backgroundColor: page === 1 ? '#f0f0f0' : '#1d1d1f',
@@ -298,7 +347,7 @@ export default function SaleTab({ region }: { region: string }) {
                     {page} / {totalPages}
                   </span>
                   <button
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    onClick={() => { setPage((p) => Math.min(totalPages, p + 1)); setExpandedIdx(null); }}
                     disabled={page === totalPages}
                     style={{
                       backgroundColor: page === totalPages ? '#f0f0f0' : '#1d1d1f',
@@ -377,6 +426,15 @@ export default function SaleTab({ region }: { region: string }) {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ display: 'flex', gap: '8px' }}>
+      <span style={{ fontSize: '11px', color: '#7a7a7a', flexShrink: 0, minWidth: '52px' }}>{label}</span>
+      <span style={{ fontSize: '11px', color: '#1d1d1f', lineHeight: '1.5' }}>{value}</span>
     </div>
   );
 }

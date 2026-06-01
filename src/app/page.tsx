@@ -49,7 +49,7 @@ export default function Home() {
       {/* HEADER */}
       <header
         style={{
-          height: '44px',
+          height: '58px',
           backgroundColor: '#000000',
           display: 'flex',
           alignItems: 'center',
@@ -64,9 +64,9 @@ export default function Home() {
         <span
           style={{
             color: '#ffffff',
-            fontSize: '11px',
-            letterSpacing: '0.08em',
-            fontWeight: 500,
+            fontSize: '15px',
+            letterSpacing: '-0.3px',
+            fontWeight: 600,
             whiteSpace: 'nowrap',
           }}
         >
@@ -78,8 +78,8 @@ export default function Home() {
           <div
             style={{
               backgroundColor: '#333333',
-              borderRadius: '8px',
-              padding: '2px',
+              borderRadius: '10px',
+              padding: '3px',
               display: 'flex',
             }}
           >
@@ -88,9 +88,9 @@ export default function Home() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 style={{
-                  padding: '4px 16px',
-                  fontSize: '11px',
-                  borderRadius: '6px',
+                  padding: '7px 22px',
+                  fontSize: '13px',
+                  borderRadius: '8px',
                   border: 'none',
                   cursor: 'pointer',
                   transition: 'all 150ms',
@@ -112,9 +112,9 @@ export default function Home() {
             style={{
               backgroundColor: '#333333',
               color: '#ffffff',
-              fontSize: '11px',
-              padding: '4px 12px',
-              borderRadius: '6px',
+              fontSize: '13px',
+              padding: '7px 16px',
+              borderRadius: '8px',
               border: 'none',
               cursor: 'pointer',
               display: 'flex',
@@ -124,7 +124,7 @@ export default function Home() {
             }}
           >
             {region}
-            <span style={{ fontSize: '9px' }}>{regionOpen ? '▾' : '▸'}</span>
+            <span style={{ fontSize: '10px' }}>{regionOpen ? '▾' : '▸'}</span>
           </button>
 
           {/* Dropdown panel */}
@@ -132,7 +132,7 @@ export default function Home() {
             <div
               style={{
                 position: 'absolute',
-                top: '36px',
+                top: '42px',
                 right: 0,
                 zIndex: 50,
                 backgroundColor: '#ffffff',
@@ -140,7 +140,6 @@ export default function Home() {
                 borderRadius: '11px',
                 padding: '12px',
                 width: '280px',
-                boxShadow: 'none',
                 outline: '1px solid #e0e0e0',
               }}
             >
@@ -159,8 +158,8 @@ export default function Home() {
                       setRegionOpen(false);
                     }}
                     style={{
-                      padding: '4px 10px',
-                      fontSize: '11px',
+                      padding: '5px 12px',
+                      fontSize: '12px',
                       borderRadius: '9999px',
                       border: region === r ? '1px solid #1d1d1f' : '1px solid #e0e0e0',
                       backgroundColor: region === r ? '#1d1d1f' : '#ffffff',
@@ -188,7 +187,7 @@ export default function Home() {
           padding: '12px',
         }}
       >
-        <div style={{ height: '100%' }}>
+        <div style={{ height: '100%', overflowY: 'auto' }}>
           {activeTab === 'sale' && <SaleTab region={region} />}
           {activeTab === 'competition' && <CompetitionTab region={region} />}
           {activeTab === 'winner' && <WinnerTab region={region} />}
